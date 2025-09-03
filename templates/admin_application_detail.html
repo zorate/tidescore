@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-file-alt"></i> Application Details #{{ application.id }}</h1>
+    <div>
+        <a href="{{ url_for('admin_applications') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Applications
+        </a>
+        <a href="{{ url_for('admin_verification_history', app_id=application.id) }}" class="btn btn-info">
+            <i class="fas fa-history"></i> View History
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Application Status -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Application Status</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Status:</strong> 
+                    <span class="badge {{ application.get_verification_status_badge() }}">
+                        {{ application.verification_status }}
+                    </span>
+                </p>
+                <p><strong>Applicant:</strong> {{ application.user_email }}</p>
+                <p><strong>Submitted:</strong> {{ application.get_formatted_date() }}</p>
+                {% if application.verified_at %}
+                <p><strong>Verified:</strong> {{ application.verified_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>Verified by:</strong> {{ application.verified_by }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Information -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">Score Information</h6>
+            </div>
+            <div class="card-body text-center">
+                {% if application.score_result %}
+                <h2 class="{{ application.get_score_color_class() }}">
+                    {{ application.get_score_value() }}/850
+                </h2>
+                <p class="badge {{ application.get_risk_badge_class() }} fs-6">
+                    {{ application.get_risk_level() }} Risk
+                </p>
+                {% else %}
+                <p class="text-muted">Not yet scored</p>
+                <a href="{{ url_for('admin_verify_application', app_id=application.id) }}" 
+                   class="btn btn-sm btn-success mt-2">
+                    <i class="fas fa-check"></i> Verify Application
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin_verify_application', app_id=application.id) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-check-circle"></i> Verify Application
+                    </a>
+                    <a href="{{ url_for('admin_verification_history', app_id=application.id) }}" 
+                       class="btn btn-info">
+                        <i class="fas fa-history"></i> View History
+                    </a>
+                    {% if application.files_path %}
+                        {% set files = application.files_path|from_json %}
+                        {% if files.employment_proof or files.airtime_proof or files.bank_statement %}
+                        <a href="#uploaded-documents" class="btn btn-outline-primary">
+                            <i class="fas fa-file-download"></i> View Documents
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Applicant Data -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Applicant Submitted Data</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category, value in application.applicant_data.items() %}
+                    {% if value %}
+                    <div class="col-md-6 mb-2">
+                        <strong>{{ category|replace('_', ' ')|title }}:</strong> 
+                        <span class="text-muted">{{ value }}</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Uploaded Files -->
+{% if application.files_path %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-file"></i> Uploaded Documents</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% set files = application.files_path|from_json %}
+                    {% if files.employment_proof %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-briefcase fa-2x text-primary mb-2"></i>
+                                <h6>Employment Proof</h6>
+                                <a href="{{ files.employment_proof.url }}" target="_blank" 
+                                   class="btn btn-sm btn-outline-primary mb-2">
+                                    <i class="fas fa-eye"></i> View Document
+                                </a>
+                                {% if not files.employment_proof.verified %}
+                                <button class="btn btn-sm btn-success verify-document" 
+                                        data-app-id="{{ application.id }}" 
+                                        data-doc-type="employment_proof">
+                                    <i class="fas fa-check"></i> Verify
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Verified
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if files.airtime_proof %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-mobile-alt fa-2x text-success mb-2"></i>
+                                <h6>Airtime Proof</h6>
+                                <a href="{{ files.airtime_proof.url }}" target="_blank" 
+                                   class="btn btn-sm btn-outline-success mb-2">
+                                    <i class="fas fa-eye"></i> View Document
+                                </a>
+                                {% if not files.airtime_proof.verified %}
+                                <button class="btn btn-sm btn-success verify-document" 
+                                        data-app-id="{{ application.id }}" 
+                                        data-doc-type="airtime_proof">
+                                    <i class="fas fa-check"></i> Verify
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Verified
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if files.bank_statement %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-university fa-2x text-warning mb-2"></i>
+                                <h6>Bank Statement</h6>
+                                <a href="{{ files.bank_statement.url }}" target="_blank" 
+                                   class="btn btn-sm btn-outline-warning mb-2">
+                                    <i class="fas fa-eye"></i> View Document
+                                </a>
+                                {% if not files.bank_statement.verified %}
+                                <button class="btn btn-sm btn-success verify-document" 
+                                        data-app-id="{{ application.id }}" 
+                                        data-doc-type="bank_statement">
+                                    <i class="fas fa-check"></i> Verify
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Verified
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if not files.employment_proof and not files.airtime_proof and not files.bank_statement %}
+                <p class="text-muted text-center">No documents uploaded</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add JavaScript for document verification -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle document verification
+    document.querySelectorAll('.verify-document').forEach(button => {
+        button.addEventListener('click', function() {
+            const appId = this.dataset.appId;
+            const docType = this.dataset.docType;
+            
+            fetch(`/admin/verify_document/${appId}/${docType}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    notes: 'Document verified by admin'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error verifying document: ' + error);
+            });
+        });
+    });
+});
+</script>
+{% endif %}
+
+<!-- Admin Verified Data -->
+{% if application.admin_verified_data %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">Admin Verified Data</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category, value in application.admin_verified_data.items() %}
+                    {% if value %}
+                    <div class="col-md-6 mb-2">
+                        <strong>{{ category|replace('_', ' ')|title }}:</strong> 
+                        <span class="text-success">{{ value }}</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Score Breakdown -->
+{% if application.score_result and application.score_result.breakdown %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Score Breakdown</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category, score in application.score_result.breakdown.items() %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ category }}</h6>
+                                <h4 class="{{ 'text-success' if score > 0 else 'text-danger' }}">
+                                    {{ score }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

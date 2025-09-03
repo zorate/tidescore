@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">New Credit Application</h4>
+                <small class="fst-italic">Submit your information for verification</small>
+            </div>
+            <div class="card-body">
+                <form id="tidescoreForm" enctype="multipart/form-data">
+                    <!-- Personal Information -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Personal Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" name="full_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" name="phone" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" name="dob" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Information -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Employment Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Employment Status</label>
+                                <select class="form-select" name="employment_status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Employed (Full-time)">Employed (Full-time)</option>
+                                    <option value="Employed (Part-time)">Employed (Part-time)</option>
+                                    <option value="Self-Employed (Business Owner)">Self-Employed (Business Owner)</option>
+                                    <option value="Student">Student</option>
+                                    <option value="Unemployed">Unemployed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Employer Name</label>
+                                <input type="text" class="form-control" name="employer_name">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Monthly Income (₦)</label>
+                                <input type="number" class="form-control" name="monthly_income" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Employment Proof (Payslip/Letter)</label>
+                                <input type="file" class="form-control" name="employment_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Airtime & Data Usage -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Airtime & Data Usage (Last 3 Months)</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Airtime Spend - Month 1 (₦)</label>
+                                <input type="number" class="form-control" name="airtime_spend_m1" value="0" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Airtime Spend - Month 2 (₦)</label>
+                                <input type="number" class="form-control" name="airtime_spend_m2" value="0" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Airtime Spend - Month 3 (₦)</label>
+                                <input type="number" class="form-control" name="airtime_spend_m3" value="0" min="0">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Airtime Statement Proof (Screenshots/PDF)</label>
+                                <input type="file" class="form-control" name="airtime_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bill Payments -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Bill Payments</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Electricity Bill Proof</label>
+                                <input type="file" class="form-control" name="electricity_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">DSTV/GOtv Subscription Proof</label>
+                                <input type="file" class="form-control" name="dstv_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Internet Bill Proof</label>
+                                <input type="file" class="form-control" name="internet_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Water Bill Proof</label>
+                                <input type="file" class="form-control" name="water_proof" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bank Information -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Bank Account Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Bank Name</label>
+                                <input type="text" class="form-control" name="bank_name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Account Number</label>
+                                <input type="text" class="form-control" name="account_number">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Bank Statement (Last 3 months)</label>
+                                <input type="file" class="form-control" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Average Monthly Balance (₦)</label>
+                                <input type="number" class="form-control" name="avg_monthly_balance" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guarantors -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Guarantors Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Guarantor 1 Name</label>
+                                <input type="text" class="form-control" name="g1_name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Guarantor 1 Phone Number</label>
+                                <input type="tel" class="form-control" name="g1_phone">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Guarantor 2 Name</label>
+                                <input type="text" class="form-control" name="g2_name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Guarantor 2 Phone Number</label>
+                                <input type="tel" class="form-control" name="g2_phone">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consent -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="consent" required>
+                            <label class="form-check-label">
+                                I consent to TideScore verifying the information provided and contacting my guarantors if necessary.
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane"></i> Submit Application
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Submission Message -->
+                <div id="submissionMessage" class="mt-4" style="display: none;">
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-check-circle"></i> Application Submitted Successfully!</h5>
+                        <p>Your application has been received and is pending verification. 
+                           You will be notified once your TideScore is calculated.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Return to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#tidescoreForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Create FormData object to handle file uploads
+        const formData = new FormData(this);
+
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Submitting...');
+
+        // Send data to server
+        $.ajax({
+            url: '/submit_application',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    // Hide form and show success message
+                    $('#tidescoreForm').hide();
+                    $('#submissionMessage').show();
+                } else {
+                    alert('Error: ' + response.message);
+                    submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Submit Application');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Error submitting application';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                alert(errorMsg);
+                submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Submit Application');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

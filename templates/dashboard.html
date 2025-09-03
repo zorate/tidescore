@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Dashboard</h1>
+    <a href="{{ url_for('new_application') }}" class="btn btn-success">+ New Application</a>
+</div>
+
+<div class="alert alert-info">
+    <h5>Welcome back, {{ user_email }}! 👋</h5>
+    <p class="mb-0">Ready to check your creditworthiness? Create a new application or view your history below.</p>
+</div>
+
+<div class="row">
+    <!-- Quick Actions Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('new_application') }}" class="btn btn-outline-primary btn-lg">
+                        🚀 Create New Application
+                    </a>
+                    <a href="{{ url_for('my_applications') }}" class="btn btn-outline-secondary">
+                        📋 View Application History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application History Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <p>Track your credit applications and monitor your financial health over time.</p>
+                <div class="text-center">
+                    <a href="{{ url_for('my_applications') }}" class="btn btn-primary">
+                        View My Application History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- How It Works Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">How TideScore Works</h5>
+            </div>
+            <div class="card-body">
+                <ol class="ps-3">
+                    <li class="mb-2">Complete the application form with your financial information</li>
+                    <li class="mb-2">Our algorithm analyzes multiple data points</li>
+                    <li class="mb-2">Get instant credit score (0-850 scale)</li>
+                    <li class="mb-2">Receive your risk assessment</li>
+                    <li>Track your score history over time</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Meaning Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Understanding Your Score</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-2">
+                        <span class="badge bg-success">650-850</span>
+                        <p class="small mb-0 mt-1">Low Risk</p>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <span class="badge bg-warning">450-649</span>
+                        <p class="small mb-0 mt-1">Medium Risk</p>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <span class="badge bg-danger">250-449</span>
+                        <p class="small mb-0 mt-1">High Risk</p>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <span class="badge bg-dark">0-249</span>
+                        <p class="small mb-0 mt-1">Very High Risk</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">Need Help?</h6>
+    </div>
+    <div class="card-body">
+        <p class="small mb-0">If you have questions about your score or need assistance with the application, our support team is here to help.</p>
+    </div>
+</div>
+{% endblock %}

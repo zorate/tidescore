@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title text-center">Welcome to TideScore</h4>
+                <p class="text-center mb-0">Login or create your account</p>
+            </div>
+            <div class="card-body">
+                <!-- Login/Signup Form -->
+                <form method="POST" action="{{ url_for('auth.login') }}" id="authForm">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="email" name="email" required 
+                               placeholder="your.email@example.com" value="{{ email if email }}"
+                               autocomplete="email">
+                        <div id="emailFeedback" class="form-text"></div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <button type="submit" name="action" value="login" 
+                                    class="btn btn-outline-primary w-100" id="loginBtn">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="action" value="signup" 
+                                    class="btn btn-primary w-100" id="signupBtn">
+                                <i class="fas fa-user-plus"></i> Sign Up
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Development Login Option -->
+                <div class="text-center">
+                    <hr>
+                    <p class="text-muted small mb-2">
+                        <strong>Development Option:</strong><br>
+                        Use this if email login fails due to network issues
+                    </p>
+                    <a href="{{ url_for('dev_login') }}" class="btn btn-warning w-100">
+                        <i class="fas fa-code"></i> Development Login
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Card -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">About TideScore</h6>
+                <p class="card-text small">
+                    <strong>New Users:</strong> Sign up to create your account and apply for credit scoring<br>
+                    <strong>Returning Users:</strong> Login to check your application status and score<br>
+                    <strong>Magic Link:</strong> We'll email you a secure login link (requires internet)<br>
+                    <strong>Development Login:</strong> Instant access for testing purposes
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for real-time email checking -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('email');
+    const emailFeedback = document.getElementById('emailFeedback');
+    const signupBtn = document.getElementById('signupBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    let emailCheckTimeout = null;
+
+    // Function to check email availability
+    function checkEmailAvailability(email) {
+        if (!email || email.length < 5 || email.indexOf('@') === -1) {
+            resetEmailFeedback();
+            return;
+        }
+
+        fetch('{{ url_for("auth.check_email") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                emailFeedback.textContent = 'Error checking email';
+                emailFeedback.className = 'form-text text-danger';
+            } else if (data.exists) {
+                emailFeedback.textContent = '✓ Email registered - Please login';
+                emailFeedback.className = 'form-text text-success';
+                signupBtn.disabled = true;
+                signupBtn.title = 'Email already registered. Use login instead.';
+                loginBtn.classList.add('btn-primary');
+                loginBtn.classList.remove('btn-outline-primary');
+            } else {
+                emailFeedback.textContent = '✓ Email available - You can sign up';
+                emailFeedback.className = 'form-text text-success';
+                signupBtn.disabled = false;
+                signupBtn.title = '';
+                loginBtn.classList.remove('btn-primary');
+                loginBtn.classList.add('btn-outline-primary');
+            }
+        })
+        .catch(error => {
+            console.error('Error checking email:', error);
+            emailFeedback.textContent = 'Unable to check email availability';
+            emailFeedback.className = 'form-text text-warning';
+        });
+    }
+
+    // Reset email feedback
+    function resetEmailFeedback() {
+        emailFeedback.textContent = 'Enter your email to check availability';
+        emailFeedback.className = 'form-text text-muted';
+        signupBtn.disabled = false;
+        signupBtn.title = '';
+        loginBtn.classList.remove('btn-primary');
+        loginBtn.classList.add('btn-outline-primary');
+    }
+
+    // Event listener for email input
+    emailInput.addEventListener('input', function() {
+        const email = this.value.trim().toLowerCase();
+        
+        // Clear previous timeout
+        clearTimeout(emailCheckTimeout);
+        
+        // Set new timeout (debounce)
+        emailCheckTimeout = setTimeout(() => {
+            checkEmailAvailability(email);
+        }, 500);
+    });
+
+    // Check email on page load if value exists
+    if (emailInput.value) {
+        checkEmailAvailability(emailInput.value.trim().toLowerCase());
+    }
+
+    // Form submission validation
+    document.getElementById('authForm').addEventListener('submit', function(e) {
+        const email = emailInput.value.trim();
+        if (!email || email.indexOf('@') === -1) {
+            e.preventDefault();
+            emailFeedback.textContent = 'Please enter a valid email address';
+            emailFeedback.className = 'form-text text-danger';
+            emailInput.focus();
+        }
+    });
+});
+</script>
+
+<style>
+#signupBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}
