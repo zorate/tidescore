@@ -3,6 +3,8 @@ from supabase import create_client, Client
 from config import Config
 from models import db
 import json
+import os
+import sqlite3
 
 # Create a Blueprint for auth routes
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -38,12 +40,11 @@ def login():
             session['auth_email'] = email
             
             # Send magic link to the user's email
-            supabase.auth.sign_in_with_otp({
-                "email": email,
-                "options": {
-                    "email_redirect_to": 'http://localhost:5000/auth/callback'
-                }
-            })
+            if os.environ.get('FLASK_ENV') == 'development':
+                 base_url = 'http://localhost:5000'
+            else:
+                 base_url = 'https://tidescore.onrender.com'
+
             
             if action == 'signup':
                 flash('Welcome! Check your email to complete registration.', 'info')
@@ -185,4 +186,5 @@ def logout():
     # Clear Flask session
     session.clear()
     flash('You have been logged out.', 'info')
+
     return redirect(url_for('auth.login'))
