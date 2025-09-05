@@ -38,14 +38,21 @@ def login():
             # Store the action in session for callback processing
             session['auth_action'] = action
             session['auth_email'] = email
-            
-            # Send magic link to the user's email
-            if os.environ.get('FLASK_ENV') == 'development':
-                 base_url = 'http://localhost:5000'
-            else:
-                 base_url = 'https://tidescore.onrender.com'
 
-            
+                # Determine the correct base URL for the environment
+            if os.environ.get('FLASK_ENV') == 'development':
+                base_url = 'http://localhost:5000'
+            else:
+                base_url = 'https://tidescore.onrender.com'
+
+            # Send magic link to the user's email
+            supabase.auth.sign_in_with_otp({
+               "email": email,
+               "options": {
+                   "email_redirect_to": f'{base_url}/auth/callback'
+               }
+            })
+ 
             if action == 'signup':
                 flash('Welcome! Check your email to complete registration.', 'info')
             else:
