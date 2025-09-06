@@ -53,8 +53,8 @@ def login():
             # --- END DEBUG LINES ---
 
 
-            # Send magic link to the user's email
-           try:
+            #Send magic link to the user's email
+        try: 
               # Try a more direct OTP approach
              result = supabase.auth.sign_in_with_otp({"email": email})
              print(f"DEBUG: OTP result: {result}")
@@ -261,6 +261,7 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
 
 
 
