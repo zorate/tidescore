@@ -98,15 +98,36 @@ def callback():
     access_token = request.args.get('access_token')
     refresh_token = request.args.get('refresh_token')
     
+    # ========== ADDED DEBUGGING ==========
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("DEBUG: CALLBACK ROUTE TRIGGERED")
+    print(f"DEBUG: Access Token present: {access_token is not None}")
+    print(f"DEBUG: Refresh Token present: {refresh_token is not None}")
+    print(f"DEBUG: Session keys: {list(session.keys())}")
+    # =====================================
+    
     if access_token:
         try:
+            # ========== ADDED DEBUGGING ==========
+            print("DEBUG: Attempting to get user data with access token...")
+            # =====================================
+            
             # Get the user's session data using the token
             user_data = supabase.auth.get_user(access_token)
             user = user_data.user
             
+            # ========== ADDED DEBUGGING ==========
+            print(f"DEBUG: User authenticated: {user.email}")
+            # =====================================
+            
             # Get the auth action from session
             action = session.get('auth_action', 'login')
             session_email = session.get('auth_email', '').lower()
+            
+            # ========== ADDED DEBUGGING ==========
+            print(f"DEBUG: Session action: {action}")
+            print(f"DEBUG: Session email: {session_email}")
+            # =====================================
             
             # Clear the auth session data
             session.pop('auth_action', None)
@@ -114,14 +135,25 @@ def callback():
             
             # Verify email matches (security check)
             if session_email and session_email != user.email.lower():
+                # ========== ADDED DEBUGGING ==========
+                print("DEBUG: Email mismatch error!")
+                print(f"DEBUG: Session email: {session_email}, User email: {user.email.lower()}")
+                # =====================================
                 flash('Email mismatch detected. Please try again.', 'error')
                 return redirect(url_for('auth.login'))
             
             # Check if this is a new user
             is_new_user = not check_user_exists(user.email)
             
+            # ========== ADDED DEBUGGING ==========
+            print(f"DEBUG: Is new user: {is_new_user}")
+            # =====================================
+            
             # Additional check for signup action
             if action == 'signup' and not is_new_user:
+                # ========== ADDED DEBUGGING ==========
+                print("DEBUG: User already exists, forcing login")
+                # =====================================
                 flash('This email is already registered. Redirecting to login.', 'warning')
                 action = 'login'  # Force login instead
             
@@ -136,6 +168,11 @@ def callback():
             session['access_token'] = access_token
             session['refresh_token'] = refresh_token
             
+            # ========== ADDED DEBUGGING ==========
+            print("DEBUG: Login successful! Session updated.")
+            print(f"DEBUG: Redirecting to dashboard, is_new_user: {is_new_user}")
+            # =====================================
+            
             # For new users, redirect to application form
             if is_new_user:
                 flash('Welcome to TideScore! Please complete your application.', 'success')
@@ -145,8 +182,15 @@ def callback():
                 return redirect(url_for('dashboard'))
                 
         except Exception as e:
+            # ========== ADDED DEBUGGING ==========
+            print(f"DEBUG: ERROR in callback: {str(e)}")
+            print(f"DEBUG: Error type: {type(e).__name__}")
+            # =====================================
             flash('Invalid login link: ' + str(e), 'error')
     
+    # ========== ADDED DEBUGGING ==========
+    print("DEBUG: No access token found or error occurred, redirecting to login")
+    # =====================================
     return redirect(url_for('auth.login'))
 
 # API endpoint to check if email is registered (for AJAX)
@@ -203,5 +247,6 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
 
 
