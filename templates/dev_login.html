@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools"></i> Development Login
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Development Only:</strong> This login bypasses authentication for testing purposes.
+                </p>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Enter any email:</label>
+                        <input type="email" class="form-control" name="email" required 
+                               placeholder="test@example.com" value="{{ email if email }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Role:</label>
+                        <select class="form-select" name="role">
+                            <option value="user">Regular User</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt"></i> Development Login
+                    </button>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Main Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
