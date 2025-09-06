@@ -54,13 +54,20 @@ def login():
 
 
             # Send magic link to the user's email
-            supabase.auth.sign_in_with_otp({
-               "email": email,
-               "options": {
-                   "email_redirect_to": f'{base_url}/auth/callback'
+           try:
+              # Try a more direct OTP approach
+             result = supabase.auth.sign_in_with_otp({"email": email})
+             print(f"DEBUG: OTP result: {result}")
+           except Exception as e:
+             print(f"DEBUG: OTP error: {e}")
+             # Fallback to original method
+             supabase.auth.sign_in_with_otp({
+             "email": email,
+             "options": {
+                 "email_redirect_to": f'{base_url}/auth/callback'
                }
-            })
- 
+             })
+               
             if action == 'signup':
                 flash('Welcome! Check your email to complete registration.', 'info')
             else:
@@ -254,6 +261,7 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
 
 
 
