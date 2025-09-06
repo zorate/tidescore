@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
 class Config:
     # Supabase Configuration
@@ -10,9 +10,16 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY")
     ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
     
+    # Auth0 Configuration
+    AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
+    AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
+    AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
+    
+    # Admin Configuration
+    ADMIN_EMAILS = [email.strip() for email in os.environ.get("ADMIN_EMAILS", "").split(",") if email.strip()]
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+    
     # Application Settings
-    DEFAULT_ADMIN_EMAIL = os.environ.get("DEFAULT_ADMIN_EMAIL", "admin@tidescore.com")
-    DEFAULT_ADMIN_PASSWORD = os.environ.get("DEFAULT_ADMIN_PASSWORD", "ChangeThisPassword123!")
     FLASK_ENV = os.environ.get("FLASK_ENV", "development")
     
     # Database configuration
@@ -22,11 +29,10 @@ class Config:
     # Validation
     @classmethod
     def validate_config(cls):
-        required_vars = ['SUPABASE_URL', 'SUPABASE_KEY', 'SECRET_KEY']
+        required_vars = ['SECRET_KEY', 'AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET']
         missing = [var for var in required_vars if not getattr(cls, var)]
         
         if missing:
-            raise ValueError(f"Missing required environment variables: {', '.join(missing)}. Please check your .env file")
+            raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
-# Validate configuration
 Config.validate_config()
