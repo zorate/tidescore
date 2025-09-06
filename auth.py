@@ -44,6 +44,14 @@ def login():
                 base_url = 'http://localhost:5000'
             else:
                 base_url = 'https://tidescore.onrender.com'
+            # --- ADD THESE LINES FOR DEBUGGING ---
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("DEBUG: Attempting to send magic link")
+            print(f"DEBUG: Using base_url: {base_url}")
+            print(f"DEBUG: Full redirect URL: {base_url}/auth/callback")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # --- END DEBUG LINES ---
+
 
             # Send magic link to the user's email
             supabase.auth.sign_in_with_otp({
@@ -195,3 +203,4 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
