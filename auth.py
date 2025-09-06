@@ -39,11 +39,12 @@ def login():
             session['auth_action'] = action
             session['auth_email'] = email
 
-                # Determine the correct base URL for the environment
+            # Determine the correct base URL for the environment
             if os.environ.get('FLASK_ENV') == 'development':
                 base_url = 'http://localhost:5000'
             else:
                 base_url = 'https://tidescore.onrender.com'
+            
             # --- ADD THESE LINES FOR DEBUGGING ---
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print("DEBUG: Attempting to send magic link")
@@ -52,32 +53,29 @@ def login():
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # --- END DEBUG LINES ---
 
-
             # Send magic link to the user's email
-       try:
-            # Try a more direct OTP approach
-            result = supabase.auth.sign_in_with_otp({"email": email})
-            print(f"DEBUG: OTP result: {result}")
-       except Exception as e:
-            print(f"DEBUG: OTP error: {e}")
-            # Fallback to original method
-            supabase.auth.sign_in_with_otp({
-              "email": email,
-              "options": {
-                  "email_redirect_to": f'{base_url}/auth/callback'
-                }
-            })
+            try:
+                # Try a more direct OTP approach
+                result = supabase.auth.sign_in_with_otp({"email": email})
+                print(f"DEBUG: OTP result: {result}")
+            except Exception as e:
+                print(f"DEBUG: OTP error: {e}")
+                # Fallback to original method
+                supabase.auth.sign_in_with_otp({
+                    "email": email,
+                    "options": {
+                        "email_redirect_to": f'{base_url}/auth/callback'
+                    }
+                })
 
-        # ========== ADD DEBUGGING ==========
-       print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-       print("DEBUG: Checking if auth worked")
-       print(f"DEBUG: Email sent to: {email}")
-       print(f"DEBUG: Redirect URL set to: {base_url}/auth/callback")
-       print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-       # =====================================
+            # ========== ADD DEBUGGING ==========
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("DEBUG: Checking if auth worked")
+            print(f"DEBUG: Email sent to: {email}")
+            print(f"DEBUG: Redirect URL set to: {base_url}/auth/callback")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # =====================================
 
-            
-               
             if action == 'signup':
                 flash('Welcome! Check your email to complete registration.', 'info')
             else:
@@ -211,7 +209,7 @@ def callback():
                 
         except Exception as e:
             print(f"DEBUG: ERROR in callback: {str(e)}")
-            print(f"DEBUG: Error type: {type(e).__name__}")
+            print(f"DEBUG: Error type: {type(e).__name__})
             flash('Invalid login link: ' + str(e), 'error')
     
     print("DEBUG: No access token found or error occurred, redirecting to login")
@@ -239,23 +237,6 @@ def check_email():
     except Exception as e:
         return jsonify({'error': 'Server error: ' + str(e)}), 500
 
-# User profile route - shows user-specific data
-#@auth_bp.route('/profile')
-#def profile():
-    #if 'user' not in session:
-       # return redirect(url_for('auth.login'))
-    
-    #user_email = session['user']['email']
-    
-    # Get user's applications from database
-   # user_applications = db.get_user_applications(session['user']['id'])
-    #applications = [db.Application.from_db_row(row) for row in user_applications]
-    
-    #return render_template('profile.html', 
-                         #user_email=user_email,
-                         #applications=applications,
-                         #is_new_user=session['user'].get('is_new_user', False))
-
 # Logout route
 @auth_bp.route('/logout')
 def logout():
@@ -271,10 +252,3 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
-
-
-
-
-
-
-
