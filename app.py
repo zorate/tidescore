@@ -43,24 +43,20 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if 'user' not in session:
             return redirect(url_for('auth.login'))
-        if not is_admin_user():
+        if not session['user'].get('is_admin', False):
             flash('Access denied. Admin privileges required.', 'error')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
-def is_admin_user():
-    """Check if current user is admin"""
-    if 'user' not in session:
-        return False
-    # Change this to your actual admin email
-    return session['user']['email'] == 'admin@tidescore.com'
-
 # Homepage - Redirects to dashboard if logged in, else to login page
 @app.route('/')
 def home():
     if 'user' in session:
-        return redirect(url_for('dashboard'))
+        if session['user'].get('is_admin', False):
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('dashboard'))
     return redirect(url_for('auth.login'))
 
 # User Dashboard - Main page after login
@@ -358,68 +354,38 @@ def admin_verification_history(app_id):
     history = db.get_verification_history(app_id)
     return render_template('admin_verification_history.html', history=history, app_id=app_id)
 
-# Development login route - REMOVE THIS IN PRODUCTION
+# Secure development login - only accessible in development mode
 @app.route('/dev_login', methods=['GET', 'POST'])
 def dev_login():
-    # Disable in production
-    if os.environ.get('FLASK_ENV') == 'production':
+    # ONLY allow in development environment
+    if os.environ.get('FLASK_ENV') != 'development':
         flash('Development login is disabled in production', 'error')
         return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
-        email = request.form.get('email')
-        # Bypass actual email sending for development
+        email = request.form.get('email', '').strip().lower()
+        role = request.form.get('role', 'user')
+        
+        if not email or '@' not in email:
+            flash('Please enter a valid email address', 'error')
+            return render_template('dev_login.html', email=email)
+        
+        # Set up user session based on role
         session['user'] = {
-            'id': 'dev-user-id-12345',
-            'email': email
+            'id': f'dev-user-{uuid.uuid4().hex[:8]}',
+            'email': email,
+            'name': email.split('@')[0],
+            'is_admin': role == 'admin'
         }
-        flash(f'Development login successful as {email}', 'success')
-        return redirect(url_for('dashboard'))
+        
+        flash(f'Development login successful as {email} ({role})', 'success')
+        
+        if role == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('dashboard'))
     
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Development Login - TideScore</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body class="bg-light">
-        <div class="container mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header bg-warning">
-                            <h5 class="card-title mb-0">Development Login</h5>
-                        </div>
-                        <div class="card-body">
-                            <form method="POST">
-                                <div class="mb-3">
-                                    <label class="form-label">Enter any email:</label>
-                                    <input type="email" class="form-control" name="email" required 
-                                           placeholder="test@example.com">
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Login</button>
-                            </form>
-                            <div class="mt-3 text-center">
-                                <a href="/auth/login" class="btn btn-sm btn-outline-secondary">
-                                    Back to Main Login
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
-
-# Quick logout route for development
-@app.route('/dev_logout')
-def dev_logout():
-    session.pop('user', None)
-    flash('Development logout successful.', 'info')
-    return redirect(url_for('dev_login'))
+    return render_template('dev_login.html')
 
 # For Vercel deployment
 @app.route('/static/<path:path>')
@@ -431,11 +397,15 @@ def serve_static(path):
 def health_check():
     return jsonify({'status': 'healthy', 'app': 'TideScore'})
 
-    # Add this at the very end of app.py
+# Add this at the very end of app.py
 if __name__ == '__main__':
-    print("starting Tidescore server...")
+    print("Starting Tidescore server...")
     print("Database: tidescore.db (SQLite)")
-    print("Development longin available at: http://localhost:5000/dev_login")
-    print("Admin dashboard: http://localhost:5000/admin (use admin@tidescore.com)")
+    
+    # Only show dev login info in development
+    if os.environ.get('FLASK_ENV') == 'development':
+        print("Development login available at: http://localhost:5000/dev_login")
+        print("Admin dashboard: http://localhost:5000/admin")
+    
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
