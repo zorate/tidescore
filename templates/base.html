@@ -9,27 +9,31 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">TideScore</a>
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-wave"></i> TideScore
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto">
                     {% if session.user %}
-                    <span class="navbar-text me-3">Hello, {{ session.user.email }}</span>
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user"></i> Hello, {{ session.user.email }}
+                    </span>
                     <a class="nav-link" href="{{ url_for('dashboard') }}">
                         <i class="fas fa-home"></i> Dashboard
                     </a>
-                    <!-- ADMIN LINK - ADD THIS -->
-                    {% if session.user.email == 'admin@tidescore.com' %}
+                    <!-- ADMIN LINK - FIXED -->
+                    {% if session.user.get('is_admin', False) %}
                     <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
                         <i class="fas fa-cog"></i> Admin
                     </a>
                     {% endif %}
                     <!-- END ADMIN LINK -->
-                    <a class="nav-link" href="{{ url_for('dev_logout') }}">
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}">  <!-- FIXED: Changed dev_logout to auth.logout -->
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                     {% else %}
@@ -43,11 +47,12 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Flash message display -->
+        <!-- Flash message display - IMPROVED -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -58,6 +63,15 @@
         <!-- Main content of each page will be inserted here -->
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4 bg-light">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                &copy; 2024 TideScore. Alternative Credit Scoring Solution.
+            </p>
+        </div>
+    </footer>
 
     <!-- Bootstrap & jQuery JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
