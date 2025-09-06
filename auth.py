@@ -97,37 +97,57 @@ def callback():
     # Get the access token from the query parameters Supabase provides
     access_token = request.args.get('access_token')
     refresh_token = request.args.get('refresh_token')
+    # Also check for other possible parameters Supabase might use
+    code = request.args.get('code')
+    error = request.args.get('error')
+    error_description = request.args.get('error_description')
     
-    # ========== ADDED DEBUGGING ==========
+    # ========== ENHANCED DEBUGGING ==========
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     print("DEBUG: CALLBACK ROUTE TRIGGERED")
+    print(f"DEBUG: All request args: {dict(request.args)}")
     print(f"DEBUG: Access Token present: {access_token is not None}")
     print(f"DEBUG: Refresh Token present: {refresh_token is not None}")
+    print(f"DEBUG: Code present: {code is not None}")
+    print(f"DEBUG: Error present: {error is not None}")
     print(f"DEBUG: Session keys: {list(session.keys())}")
     # =====================================
     
+    # If there's an error from Supabase, handle it
+    if error:
+        print(f"DEBUG: Supabase error: {error} - {error_description}")
+        flash(f'Authentication error: {error_description}', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # If we have a code parameter instead of direct tokens, we need to exchange it
+    if code and not access_token:
+        try:
+            print(f"DEBUG: Attempting to exchange code for session: {code}")
+            # Exchange the code for a session
+            session_data = supabase.auth.exchange_code_for_session({'code': code})
+            access_token = session_data.access_token
+            refresh_token = session_data.refresh_token
+            print(f"DEBUG: Code exchange successful. New access token: {access_token is not None}")
+        except Exception as e:
+            print(f"DEBUG: Error exchanging code: {str(e)}")
+            flash('Invalid authentication code.', 'error')
+            return redirect(url_for('auth.login'))
+    
     if access_token:
         try:
-            # ========== ADDED DEBUGGING ==========
             print("DEBUG: Attempting to get user data with access token...")
-            # =====================================
-            
             # Get the user's session data using the token
             user_data = supabase.auth.get_user(access_token)
             user = user_data.user
             
-            # ========== ADDED DEBUGGING ==========
             print(f"DEBUG: User authenticated: {user.email}")
-            # =====================================
             
             # Get the auth action from session
             action = session.get('auth_action', 'login')
             session_email = session.get('auth_email', '').lower()
             
-            # ========== ADDED DEBUGGING ==========
             print(f"DEBUG: Session action: {action}")
             print(f"DEBUG: Session email: {session_email}")
-            # =====================================
             
             # Clear the auth session data
             session.pop('auth_action', None)
@@ -135,25 +155,18 @@ def callback():
             
             # Verify email matches (security check)
             if session_email and session_email != user.email.lower():
-                # ========== ADDED DEBUGGING ==========
                 print("DEBUG: Email mismatch error!")
                 print(f"DEBUG: Session email: {session_email}, User email: {user.email.lower()}")
-                # =====================================
                 flash('Email mismatch detected. Please try again.', 'error')
                 return redirect(url_for('auth.login'))
             
             # Check if this is a new user
             is_new_user = not check_user_exists(user.email)
-            
-            # ========== ADDED DEBUGGING ==========
             print(f"DEBUG: Is new user: {is_new_user}")
-            # =====================================
             
             # Additional check for signup action
             if action == 'signup' and not is_new_user:
-                # ========== ADDED DEBUGGING ==========
                 print("DEBUG: User already exists, forcing login")
-                # =====================================
                 flash('This email is already registered. Redirecting to login.', 'warning')
                 action = 'login'  # Force login instead
             
@@ -168,10 +181,8 @@ def callback():
             session['access_token'] = access_token
             session['refresh_token'] = refresh_token
             
-            # ========== ADDED DEBUGGING ==========
             print("DEBUG: Login successful! Session updated.")
             print(f"DEBUG: Redirecting to dashboard, is_new_user: {is_new_user}")
-            # =====================================
             
             # For new users, redirect to application form
             if is_new_user:
@@ -182,15 +193,11 @@ def callback():
                 return redirect(url_for('dashboard'))
                 
         except Exception as e:
-            # ========== ADDED DEBUGGING ==========
             print(f"DEBUG: ERROR in callback: {str(e)}")
             print(f"DEBUG: Error type: {type(e).__name__}")
-            # =====================================
             flash('Invalid login link: ' + str(e), 'error')
     
-    # ========== ADDED DEBUGGING ==========
     print("DEBUG: No access token found or error occurred, redirecting to login")
-    # =====================================
     return redirect(url_for('auth.login'))
 
 # API endpoint to check if email is registered (for AJAX)
@@ -247,6 +254,7 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
 
 
 
