@@ -53,20 +53,30 @@ def login():
             # --- END DEBUG LINES ---
 
 
-            #Send magic link to the user's email
-        try: 
-              # Try a more direct OTP approach
-             result = supabase.auth.sign_in_with_otp({"email": email})
-             print(f"DEBUG: OTP result: {result}")
-           except Exception as e:
-             print(f"DEBUG: OTP error: {e}")
-             # Fallback to original method
-             supabase.auth.sign_in_with_otp({
-             "email": email,
-             "options": {
-                 "email_redirect_to": f'{base_url}/auth/callback'
-               }
-             })
+            # Send magic link to the user's email
+       try:
+            # Try a more direct OTP approach
+            result = supabase.auth.sign_in_with_otp({"email": email})
+            print(f"DEBUG: OTP result: {result}")
+       except Exception as e:
+            print(f"DEBUG: OTP error: {e}")
+            # Fallback to original method
+            supabase.auth.sign_in_with_otp({
+              "email": email,
+              "options": {
+                  "email_redirect_to": f'{base_url}/auth/callback'
+                }
+            })
+
+        # ========== ADD DEBUGGING ==========
+       print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+       print("DEBUG: Checking if auth worked")
+       print(f"DEBUG: Email sent to: {email}")
+       print(f"DEBUG: Redirect URL set to: {base_url}/auth/callback")
+       print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+       # =====================================
+
+            
                
             if action == 'signup':
                 flash('Welcome! Check your email to complete registration.', 'info')
@@ -261,6 +271,7 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
 
 
 
