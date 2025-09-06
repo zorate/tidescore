@@ -172,21 +172,21 @@ def check_email():
         return jsonify({'error': 'Server error: ' + str(e)}), 500
 
 # User profile route - shows user-specific data
-@auth_bp.route('/profile')
-def profile():
-    if 'user' not in session:
-        return redirect(url_for('auth.login'))
+#@auth_bp.route('/profile')
+#def profile():
+    #if 'user' not in session:
+       # return redirect(url_for('auth.login'))
     
-    user_email = session['user']['email']
+    #user_email = session['user']['email']
     
     # Get user's applications from database
-    user_applications = db.get_user_applications(session['user']['id'])
-    applications = [db.Application.from_db_row(row) for row in user_applications]
+   # user_applications = db.get_user_applications(session['user']['id'])
+    #applications = [db.Application.from_db_row(row) for row in user_applications]
     
-    return render_template('profile.html', 
-                         user_email=user_email,
-                         applications=applications,
-                         is_new_user=session['user'].get('is_new_user', False))
+    #return render_template('profile.html', 
+                         #user_email=user_email,
+                         #applications=applications,
+                         #is_new_user=session['user'].get('is_new_user', False))
 
 # Logout route
 @auth_bp.route('/logout')
@@ -203,4 +203,5 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
 
