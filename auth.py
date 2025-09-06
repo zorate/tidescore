@@ -209,7 +209,7 @@ def callback():
                 
         except Exception as e:
             print(f"DEBUG: ERROR in callback: {str(e)}")
-            print(f"DEBUG: Error type: {type(e).__name__})
+            print(f"DEBUG: Error type: {type(e).__name__}")
             flash('Invalid login link: ' + str(e), 'error')
     
     print("DEBUG: No access token found or error occurred, redirecting to login")
@@ -252,3 +252,4 @@ def logout():
     flash('You have been logged out.', 'info')
 
     return redirect(url_for('auth.login'))
+
