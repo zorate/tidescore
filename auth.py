@@ -1,110 +1,109 @@
 from flask import Blueprint, request, redirect, url_for, session, render_template, flash
-from auth0.authentication import GetToken
-from auth0.authentication import Users
 from config import Config
+import hashlib
 import os
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+# Simple password hashing
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# Initialize with admin user
+def init_users():
+    return {
+        'admin@tidescore.com': {
+            'password_hash': hash_password(Config.ADMIN_PASSWORD),
+            'is_admin': True,
+            'name': 'Admin User'
+        }
+    }
+
+# Global users dictionary
+USERS = init_users()
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    global USERS
+    
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
-        action = request.form.get('action')
+        action = request.form.get('action')  # 'login' or 'signup'
         
         if not email or '@' not in email:
             flash('Please enter a valid email address', 'error')
-            return render_template('index.html', email=email)
+            return render_template('login.html', email=email)
         
-        # Check if admin requires password
-        is_admin = email in Config.ADMIN_EMAILS
+        # Check if user exists
+        user_exists = email in USERS
         
-        if is_admin:
+        if action == 'signup':
+            if user_exists:
+                flash('Email already registered. Please login instead.', 'error')
+                return render_template('login.html', email=email)
+            
+            # Register new user
             if not password:
-                # First step: show password field for admin
-                flash('Admin access requires password verification', 'info')
-                return render_template('index.html', email=email, show_password=True, is_admin=True)
+                flash('Password is required for registration', 'error')
+                return render_template('login.html', email=email)
             
-            # Verify admin password
-            if password != Config.ADMIN_PASSWORD:
-                flash('Invalid admin password', 'error')
-                return render_template('index.html', email=email, show_password=True, is_admin=True)
-        
-        # Send magic link via Auth0 (for both users and admins)
-        try:
-            auth0 = GetToken(Config.AUTH0_DOMAIN)
-            auth0.passwordless_start(
-                client_id=Config.AUTH0_CLIENT_ID,
-                connection='email',
-                email=email,
-                send='link',
-                authParams={'scope': 'openid profile email'}
-            )
-            
-            # Store admin status in session for callback
-            if is_admin:
-                session['pending_admin'] = True
-                
-            flash('Check your email for the login link!', 'info')
-            
-        except Exception as e:
-            flash('Error sending login link. Please try again.', 'error')
-        
-        return render_template('index.html', email=email)
-    
-    return render_template('index.html')
-
-@auth_bp.route('/callback')
-def callback():
-    code = request.args.get('code')
-    
-    if code:
-        try:
-            auth0 = GetToken(Config.AUTH0_DOMAIN)
-            token = auth0.authorization_code(
-                client_id=Config.AUTH0_CLIENT_ID,
-                client_secret=Config.AUTH0_CLIENT_SECRET,
-                code=code,
-                grant_type='authorization_code',
-                redirect_uri=f'https://tidescore.onrender.com/auth/callback'
-            )
-            
-            # Get user info
-            users = Users(Config.AUTH0_DOMAIN)
-            user_info = users.userinfo(token['access_token'])
-            user_email = user_info['email'].lower()
-            
-            # Check if user is admin
-            is_admin = user_email in Config.ADMIN_EMAILS and session.get('pending_admin')
-            
-            # Store in session
-            session['user'] = {
-                'id': user_info['sub'],
-                'email': user_email,
-                'name': user_info.get('name', ''),
-                'is_admin': is_admin
+            USERS[email] = {
+                'password_hash': hash_password(password),  # Hash the password
+                'is_admin': False,
+                'name': email.split('@')[0]
             }
             
-            # Clean up
-            session.pop('pending_admin', None)
+            flash('Registration successful! Please login.', 'success')
+            return render_template('login.html', email=email)
+        
+        elif action == 'login':
+            if not user_exists:
+                flash('No account found with this email. Please sign up first.', 'error')
+                return render_template('login.html', email=email)
             
-            flash('Successfully logged in!', 'success')
+            if not password:
+                flash('Please enter your password', 'error')
+                return render_template('login.html', email=email)
             
-            if is_admin:
+            # Verify password - Compare hashed values
+            user = USERS[email]
+            entered_password_hash = hash_password(password)  # Hash the entered password
+            
+            print(f"DEBUG: Entered hash: {entered_password_hash}")  # Debug line
+            print(f"DEBUG: Stored hash: {user['password_hash']}")   # Debug line
+            
+            if user['password_hash'] != entered_password_hash:
+                flash('Invalid password', 'error')
+                return render_template('login.html', email=email)
+            
+            # Login successful
+            session['user'] = {
+                'id': f"user-{email}",
+                'email': email,
+                'name': user['name'],
+                'is_admin': user['is_admin']
+            }
+            
+            flash('Login successful!', 'success')
+            
+            if user['is_admin']:
                 return redirect(url_for('admin_dashboard'))
             else:
                 return redirect(url_for('dashboard'))
-                
-        except Exception as e:
-            flash('Login failed. Please try again.', 'error')
     
-    return redirect(url_for('auth.login'))
+    return render_template('login.html')
 
 @auth_bp.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out.', 'info')
-    return redirect(f'https://{Config.AUTH0_DOMAIN}/v2/logout?client_id={Config.AUTH0_CLIENT_ID}&returnTo=https://tidescore.onrender.com')
+    return redirect(url_for('auth.login'))
 
-# Remove the check_email endpoint since we're using Auth0
+# Add a route to reset passwords for testing
+@auth_bp.route('/reset_test_data')
+def reset_test_data():
+    global USERS
+    USERS = init_users()
+    flash('Test data reset successfully', 'success')
+    return redirect(url_for('auth.login'))
