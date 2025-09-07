@@ -32,18 +32,17 @@
                                autocomplete="email">
                     </div>
                     
-                    {% if show_password %}
+                    <!-- PASSWORD FIELD - ALWAYS VISIBLE -->
                     <div class="mb-3">
                         <label for="password" class="form-label">
-                            <i class="fas fa-lock"></i> Admin Password
+                            <i class="fas fa-lock"></i> Password
                         </label>
-                        <input type="password" class="form-control form-control-lg" id="password" name="password" required 
-                               placeholder="Enter admin password">
-                        <div class="form-text text-warning">
-                            <i class="fas fa-shield-alt"></i> Admin access requires additional verification
+                        <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                               placeholder="Enter your password" required>
+                        <div class="form-text">
+                            <i class="fas fa-shield-alt"></i> Enter your password to login or sign up
                         </div>
                     </div>
-                    {% endif %}
 
                     <div class="d-grid gap-2">
                         <button type="submit" name="action" value="login" 
@@ -59,7 +58,7 @@
 
                 <div class="text-center mt-4">
                     <p class="text-muted mb-0">
-                        <i class="fas fa-info-circle"></i> We'll email you a secure magic link
+                        <i class="fas fa-key"></i> Secure password authentication
                     </p>
                 </div>
             </div>
@@ -75,15 +74,15 @@
                     <div class="col-12">
                         <p class="card-text small mb-1">
                             <i class="fas fa-user-plus text-success"></i> 
-                            <strong>New Users:</strong> Sign up to apply for credit scoring
+                            <strong>New Users:</strong> Sign up with email and password
                         </p>
                         <p class="card-text small mb-1">
                             <i class="fas fa-sign-in-alt text-primary"></i> 
-                            <strong>Returning Users:</strong> Login to check your application status
+                            <strong>Returning Users:</strong> Login with your credentials
                         </p>
                         <p class="card-text small mb-0">
                             <i class="fas fa-lock text-warning"></i> 
-                            <strong>Secure:</strong> Magic link authentication for your safety
+                            <strong>Secure:</strong> Your data is protected
                         </p>
                     </div>
                 </div>
@@ -116,15 +115,25 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
     const authForm = document.getElementById('authForm');
 
     // Form submission validation
     authForm.addEventListener('submit', function(e) {
         const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        
         if (!email || email.indexOf('@') === -1) {
             e.preventDefault();
             alert('Please enter a valid email address');
             emailInput.focus();
+            return;
+        }
+        
+        if (!password) {
+            e.preventDefault();
+            alert('Please enter your password');
+            passwordInput.focus();
         }
     });
 });
