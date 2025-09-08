@@ -4,15 +4,19 @@ from models import db, Application
 import json
 import os
 import uuid
-from supabase import create_client
 from datetime import datetime
 from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = Config.SECRET_KEY
 
-# Initialize Supabase client for storage
-supabase_storage = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+# Initialize Supabase client for storage (if still needed)
+#supabase_storage = None
+#if Config.SUPABASE_URL and Config.SUPABASE_KEY:
+    #from supabase import create_client
+    #supabase_storage = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+#else:
+    #print("Warning: Supabase storage not configured. File uploads will be disabled.")
 
 # === SECURITY IMPROVEMENT: Add security headers ===
 @app.after_request
@@ -73,7 +77,7 @@ def new_application():
         return redirect(url_for('auth.login'))
     return render_template('applications.html')
 
-# New route to handle application submissions with file uploads
+# New route to handle application submissions with LOCAL file uploads
 @app.route('/submit_application', methods=['POST'])
 def submit_application():
     if 'user' not in session:
@@ -101,7 +105,7 @@ def submit_application():
             'g2_phone': request.form.get('g2_phone')
         }
 
-        # === FIXED: Proper file upload to Supabase Storage ===
+        # === LOCAL FILE UPLOAD (no Supabase) ===
         files_uploaded = {}
         for file_type in ['employment_proof', 'airtime_proof', 'bank_statement']:
             if file_type in request.files:
@@ -116,28 +120,26 @@ def submit_application():
                             # Generate unique filename
                             unique_filename = f"{session['user']['id']}_{file_type}_{uuid.uuid4().hex}.{file_extension}"
                             
-                            # Upload to Supabase Storage - FIXED SYNTAX
-                            file_content = file.read()
-                            result = supabase_storage.storage.from_("applications").upload(
-                                unique_filename,
-                                file_content,
-                                {"content-type": file.content_type}
-                            )
+                            # Create uploads directory if it doesn't exist
+                            upload_dir = 'uploads'
+                            os.makedirs(upload_dir, exist_ok=True)
                             
-                            # Get public URL
-                            file_url = supabase_storage.storage.from_("applications").get_public_url(unique_filename)
+                            # Save file locally
+                            file_path = os.path.join(upload_dir, unique_filename)
+                            file.save(file_path)
+                            
                             files_uploaded[file_type] = {
-                                'url': file_url,
+                                'path': unique_filename,  # Store filename only
                                 'verified': False,
                                 'verification_notes': '',
                                 'verified_by': '',
                                 'verified_at': ''
                             }
                             
-                            print(f"File uploaded successfully: {file_url}")
+                            print(f"File saved locally: {file_path}")
                             
                         except Exception as e:
-                            print(f"Error uploading file {file.filename}: {e}")
+                            print(f"Error saving file {file.filename}: {e}")
                             flash(f'Error uploading {file_type}: {str(e)}', 'error')
                     else:
                         print(f"Rejected invalid file type: {file.filename}")
@@ -163,6 +165,11 @@ def submit_application():
         print("Error submitting application:", e)
         return jsonify({'error': 'Failed to submit application'}), 500
 
+# Add this route to serve uploaded files
+@app.route('/uploads/<filename>')
+def serve_uploaded_file(filename):
+    return send_from_directory('uploads', filename)
+
 # API Endpoint to calculate the score
 @app.route('/calculate_score', methods=['POST'])
 def calculate_score():
@@ -179,14 +186,18 @@ def calculate_score():
         score_result = calculate_tidescore(applicant_data)
         print("Score calculated:", score_result)
 
-        # Save to database using our simple SQLite approach
+        # Add the score result to the applicant data
+        applicant_data_with_score = applicant_data.copy()
+        applicant_data_with_score['score_result'] = score_result
+
+        # Save to database - NOW WITH SCORE INCLUDED
         app_id = db.add_application(
             session['user']['id'],
             session['user']['email'],
-            applicant_data,
-            score_result
+            applicant_data_with_score,  # Pass data WITH score
+            None  # files_path is None for score calculation
         )
-        print(f"Application {app_id} saved to database!")
+        print(f"Application {app_id} saved to database with score!")
 
         return jsonify(score_result)
 
@@ -331,18 +342,17 @@ def admin_view_document(app_id, document_type):
         if document_type not in files_data or not files_data[document_type]:
             abort(404)
         
-        # For Supabase storage, redirect to the URL
-        if isinstance(files_data[document_type], dict) and 'url' in files_data[document_type]:
-            return redirect(files_data[document_type]['url'])
-        else:
-            # For local file storage (if you switch later)
-            file_path = files_data[document_type]
+        # For LOCAL file storage
+        if isinstance(files_data[document_type], dict) and 'path' in files_data[document_type]:
+            file_path = files_data[document_type]['path']
             absolute_path = os.path.join('uploads', file_path)
             
             if not os.path.exists(absolute_path):
                 abort(404)
                 
             return send_file(absolute_path, as_attachment=False)
+        else:
+            abort(404)
         
     except Exception as e:
         print(f"Error serving document: {e}")
