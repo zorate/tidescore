@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tidescore-mvp
+    name: tidescore
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -12,3 +12,7 @@ services:
         fromSecret: SUPABASE_URL
       - key: SUPABASE_KEY  
         fromSecret: SUPABASE_KEY
+      - key: DATA_DIR
+        value: /tmp/data  # This directory persists across deploys
+      - key: ADMIN_PASSWORD  # ← ADD THIS
+        fromSecret: ADMIN_PASSWORD  # ← ADD THIS (set in Render dashboard)
