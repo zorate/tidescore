@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-clock"></i> Pending Verification</h1>
+    <div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-chart-bar"></i> Dashboard
+        </a>
+        <a href="{{ url_for('admin_applications') }}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> All Applications
+        </a>
+    </div>
+</div>
+
+{% if applications %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Applications Awaiting Verification ({{ applications|length }})</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Applicant</th>
+                        <th>Email</th>
+                        <th>Documents</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td><strong>#{{ app.id }}</strong></td>
+                        <td>{{ app.applicant_data.get('full_name', 'N/A') }}</td>
+                        <td>{{ app.user_email }}</td>
+                        <td>
+                            {% if app.files_path %}
+                                {% set files = app.files_path|from_json %}
+                                {% if files.employment_proof or files.airtime_proof or files.bank_statement %}
+                                <span class="badge bg-success" title="Documents uploaded">
+                                    <i class="fas fa-file"></i> 
+                                    {% set doc_count = 0 %}
+                                    {% if files.employment_proof %}{% set doc_count = doc_count + 1 %}{% endif %}
+                                    {% if files.airtime_proof %}{% set doc_count = doc_count + 1 %}{% endif %}
+                                    {% if files.bank_statement %}{% set doc_count = doc_count + 1 %}{% endif %}
+                                    {{ doc_count }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning" title="No documents">
+                                    <i class="fas fa-times"></i> 0
+                                </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-danger" title="No documents">
+                                    <i class="fas fa-times"></i> 0
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ app.get_formatted_date() }}</td>
+                        <td>
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock"></i> Pending
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_verify_application', app_id=app.id) }}" 
+                               class="btn btn-sm btn-success">
+                                <i class="fas fa-check-circle"></i> Verify
+                            </a>
+                            <a href="{{ url_for('admin_application_detail', app_id=app.id) }}" 
+                               class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success">
+    <h5><i class="fas fa-check-circle"></i> All Caught Up!</h5>
+    <p>There are no applications pending verification.</p>
+    <a href="{{ url_for('admin_applications') }}" class="btn btn-primary">
+        View All Applications
+    </a>
+</div>
+{% endif %}
+{% endblock %}

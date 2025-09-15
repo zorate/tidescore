@@ -1,0 +1,186 @@
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+}
+
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.58);
+    margin-bottom: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-radius: 16px 16px 0 0 !important;
+    font-weight: 600;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: #ecf0f1ff;
+    border: none;
+    padding: 20px;
+}
+
+.navbar {
+    background: rgba(44, 62, 80, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #ecf0f1 !important;
+}
+
+.navbar-nav .nav-link {
+    color: #bdc3c7 !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ecf0f1 !important;
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #1c6ea4 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.btn-outline-primary {
+    border: 2px solid #3498db;
+    color: #3498db;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.alert {
+    border-radius: 12px;
+    border: none;
+    padding: 16px;
+    font-weight: 500;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d6eaf8 0%, #ebf5fb 100%);
+    color: #2874a6;
+    border-left: 4px solid #3498db;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d5f4e6 0%, #eafaf1 100%);
+    color: #1e8449;
+    border-left: 4px solid #27ae60;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fdebd0 0%, #fef9e7 100%);
+    color: #9c640c;
+    border-left: 4px solid #f39c12;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #fadbd8 0%, #fdedec 100%);
+    color: #c0392b;
+    border-left: 4px solid #e74c3c;
+}
+
+.form-control {
+    border-radius: 12px;
+    padding: 14px;
+    border: 2px solid #ecf0f1;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15);
+    background: white;
+}
+
+.form-select {
+    border-radius: 12px;
+    padding: 14px;
+    border: 2px solid #ecf0f1;
+    background: #f8f9fa;
+}
+
+.form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15);
+}
+
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.table th {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: #ecf0f1;
+    font-weight: 600;
+    border: none;
+    padding: 16px;
+}
+
+.table td {
+    padding: 16px;
+    border-color: #ecf0f1;
+    background: white;
+}
+
+/* Calming color palette */
+:root {
+    --primary-blue: #3498db;
+    --dark-blue: #2c3e50;
+    --light-blue: #ecf0f1;
+    --success-green: #27ae60;
+    --warning-orange: #f39c12;
+    --danger-red: #e74c3c;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+}
+
+.text-primary { color: var(--primary-blue) !important; }
+.text-dark { color: var(--dark-blue) !important; }
+.text-muted { color: var(--text-light) !important; }
+
+/* Smooth transitions for all interactive elements */
+a, button, .form-control, .card {
+    transition: all 0.3s ease;
+}
+
+/* Better focus states for accessibility */
+.btn:focus, .form-control:focus, .form-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+}

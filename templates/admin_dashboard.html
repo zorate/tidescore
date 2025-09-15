@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-cog"></i> Admin Dashboard</h1>
+    <div>
+        <a href="{{ url_for('admin_applications') }}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> View All Applications
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-user"></i> User View
+        </a>
+    </div>
+</div>
+
+<!-- Verification Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Verification Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <span class="badge bg-warning fs-6">Pending: {{ verification_stats.get('Pending', 0) }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-info fs-6">Under Review: {{ verification_stats.get('Under Review', 0) }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-success fs-6">Verified: {{ verification_stats.get('Verified', 0) }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-danger fs-6">Rejected: {{ verification_stats.get('Rejected', 0) }}</span>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin_pending_applications') }}" class="btn btn-primary">
+                        <i class="fas fa-clock"></i> Review Pending Applications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-primary">{{ total_applications }}</h2>
+                <p class="card-text">Total Applications</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-success">{{ average_score }}/850</h2>
+                <p class="card-text">Average Score</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-info">{{ applications|length }}</h2>
+                <p class="card-text">Recent Applications</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Distribution -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Risk Level Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <span class="badge bg-success fs-6">Low: {{ risk_distribution.Low }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-warning fs-6">Medium: {{ risk_distribution.Medium }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-danger fs-6">High: {{ risk_distribution.High }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-dark fs-6">Very High: {{ risk_distribution['Very High'] }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Applications -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Recent Applications</h5>
+    </div>
+    <div class="card-body">
+        {% if applications %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User Email</th>
+                        <th>Documents</th>
+                        <th>Score</th>
+                        <th>Risk</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>{{ app.id }}</td>
+                        <td>{{ app.user_email }}</td>
+                        <td>
+                            {% if app.files_path %}
+                                {% set files = app.files_path|from_json %}
+                                <span class="badge bg-{{ 'success' if files.employment_proof or files.airtime_proof or files.bank_statement else 'warning' }}">
+                                    <i class="fas fa-file"></i> 
+                                    {% set doc_count = 0 %}
+                                    {% if files.employment_proof %}{% set doc_count = doc_count + 1 %}{% endif %}
+                                    {% if files.airtime_proof %}{% set doc_count = doc_count + 1 %}{% endif %}
+                                    {% if files.bank_statement %}{% set doc_count = doc_count + 1 %}{% endif %}
+                                    {{ doc_count }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times"></i> 0
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="{{ app.get_score_color_class() }}">
+                                {{ app.get_score_value() }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ app.get_risk_badge_class() }}">
+                                {{ app.get_risk_level() }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ app.get_verification_status_badge() }}">
+                                {{ app.verification_status }}
+                            </span>
+                        </td>
+                        <td>{{ app.get_formatted_date() }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_application_detail', app_id=app.id) }}" 
+                               class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if app.verification_status == 'Pending' %}
+                            <a href="{{ url_for('admin_verify_application', app_id=app.id) }}" 
+                               class="btn btn-sm btn-success">
+                                <i class="fas fa-check"></i> Verify
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No applications found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

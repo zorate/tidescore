@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-check-circle"></i> Verify Application #{{ application.id }}</h1>
+    <div>
+        <a href="{{ url_for('admin_pending_applications') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Pending
+        </a>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('verify_application', app_id=application.id) }}">
+    <div class="row">
+        <!-- Applicant Information -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">Applicant Information</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ application.applicant_data.get('full_name', 'N/A') }}</p>
+                    <p><strong>Email:</strong> {{ application.user_email }}</p>
+                    <p><strong>Phone:</strong> {{ application.applicant_data.get('phone', 'N/A') }}</p>
+                    <p><strong>Submitted:</strong> {{ application.get_formatted_date() }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uploaded Files -->
+        {% if application.files_path %}
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-file"></i> Uploaded Documents</h6>
+                </div>
+                <div class="card-body">
+                    {% set files = application.files_path|from_json %}
+                    
+                    {% if files.employment_proof %}
+                    <div class="mb-3">
+                        <h6>Employment Proof</h6>
+                        <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='employment_proof') }}" target="_blank" 
+                           class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-eye"></i> View Document
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if files.airtime_proof %}
+                    <div class="mb-3">
+                        <h6>Airtime Proof</h6>
+                        <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='airtime_proof') }}" target="_blank" 
+                           class="btn btn-sm btn-outline-success w-100">
+                            <i class="fas fa-eye"></i> View Document
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if files.bank_statement %}
+                    <div class="mb-3">
+                        <h6>Bank Statement</h6>
+                        <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='bank_statement') }}" target="_blank" 
+                           class="btn btn-sm btn-outline-warning w-100">
+                            <i class="fas fa-eye"></i> View Document
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not files.employment_proof and not files.airtime_proof and not files.bank_statement %}
+                    <p class="text-muted text-center">No documents uploaded</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Verification Controls -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Verification Controls</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Overall Status</label>
+                        <select class="form-select" name="overall_status" required>
+                            <option value="Pending" {{ 'selected' if application.verification_status == 'Pending' }}>Pending</option>
+                            <option value="Under Review" {{ 'selected' if application.verification_status == 'Under Review' }}>Under Review</option>
+                            <option value="Verified" {{ 'selected' if application.verification_status == 'Verified' }}>Verified</option>
+                            <option value="Rejected" {{ 'selected' if application.verification_status == 'Rejected' }}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Verification Notes</label>
+                        <textarea class="form-control" name="verification_notes" 
+                                  placeholder="Add notes about this verification..." rows="3">{{ request.form.get('verification_notes', '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Verification Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0"><i class="fas fa-file-check"></i> Document Verification</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% set file_status = application.get_file_verification_status() %}
+                        {% set files = application.files_path|from_json if application.files_path else {} %}
+                        
+                        <!-- Employment Proof Verification -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Employment Proof</h6>
+                                    <span class="badge bg-{{ 'success' if file_status.employment_proof == 'Verified' else 'warning' if file_status.employment_proof == 'Pending' else 'danger' if file_status.employment_proof == 'Rejected' else 'secondary' }}">
+                                        {{ file_status.employment_proof or 'Not Uploaded' }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    {% if files.employment_proof %}
+                                    <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='employment_proof') }}" 
+                                       target="_blank" class="btn btn-sm btn-outline-primary w-100 mb-2">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>
+                                    <select class="form-select mb-2" name="employment_proof_status">
+                                        <option value="Pending" {{ 'selected' if file_status.employment_proof == 'Pending' }}>Pending Review</option>
+                                        <option value="Verified" {{ 'selected' if file_status.employment_proof == 'Verified' }}>✅ Verified</option>
+                                        <option value="Rejected" {{ 'selected' if file_status.employment_proof == 'Rejected' }}>❌ Rejected</option>
+                                    </select>
+                                    <textarea class="form-control" name="employment_proof_notes" 
+                                              placeholder="Verification notes..." rows="2">{{ file_status.get('employment_proof_notes', '') }}</textarea>
+                                    {% else %}
+                                    <p class="text-muted text-center">No document uploaded</p>
+                                    <input type="hidden" name="employment_proof_status" value="Not Provided">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Airtime Proof Verification -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Airtime Proof</h6>
+                                    <span class="badge bg-{{ 'success' if file_status.airtime_proof == 'Verified' else 'warning' if file_status.airtime_proof == 'Pending' else 'danger' if file_status.airtime_proof == 'Rejected' else 'secondary' }}">
+                                        {{ file_status.airtime_proof or 'Not Uploaded' }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    {% if files.airtime_proof %}
+                                    <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='airtime_proof') }}" 
+                                       target="_blank" class="btn btn-sm btn-outline-success w-100 mb-2">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>
+                                    <select class="form-select mb-2" name="airtime_proof_status">
+                                        <option value="Pending" {{ 'selected' if file_status.airtime_proof == 'Pending' }}>Pending Review</option>
+                                        <option value="Verified" {{ 'selected' if file_status.airtime_proof == 'Verified' }}>✅ Verified</option>
+                                        <option value="Rejected" {{ 'selected' if file_status.airtime_proof == 'Rejected' }}>❌ Rejected</option>
+                                    </select>
+                                    <textarea class="form-control" name="airtime_proof_notes" 
+                                              placeholder="Verification notes..." rows="2">{{ file_status.get('airtime_proof_notes', '') }}</textarea>
+                                    {% else %}
+                                    <p class="text-muted text-center">No document uploaded</p>
+                                    <input type="hidden" name="airtime_proof_status" value="Not Provided">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bank Statement Verification -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Bank Statement</h6>
+                                    <span class="badge bg-{{ 'success' if file_status.bank_statement == 'Verified' else 'warning' if file_status.bank_statement == 'Pending' else 'danger' if file_status.bank_statement == 'Rejected' else 'secondary' }}">
+                                        {{ file_status.bank_statement or 'Not Uploaded' }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    {% if files.bank_statement %}
+                                    <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='bank_statement') }}" 
+                                       target="_blank" class="btn btn-sm btn-outline-warning w-100 mb-2">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>
+                                    <select class="form-select mb-2" name="bank_statement_status">
+                                        <option value="Pending" {{ 'selected' if file_status.bank_statement == 'Pending' }}>Pending Review</option>
+                                        <option value="Verified" {{ 'selected' if file_status.bank_statement == 'Verified' }}>✅ Verified</option>
+                                        <option value="Rejected" {{ 'selected' if file_status.bank_statement == 'Rejected' }}>❌ Rejected</option>
+                                    </select>
+                                    <textarea class="form-control" name="bank_statement_notes" 
+                                              placeholder="Verification notes..." rows="2">{{ file_status.get('bank_statement_notes', '') }}</textarea>
+                                    {% else %}
+                                    <p class="text-muted text-center">No document uploaded</p>
+                                    <input type="hidden" name="bank_statement_status" value="Not Provided">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Sections -->
+    <div class="row mt-4">
+        <!-- Employment Verification -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Employment Verification</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Employment Status</label>
+                        <select class="form-select" name="employment_status">
+                            <option value="Employed (Full-time)" {{ 'selected' if application.applicant_data.get('employment_status') == 'Employed (Full-time)' }}>Employed (Full-time)</option>
+                            <option value="Employed (Part-time)" {{ 'selected' if application.applicant_data.get('employment_status') == 'Employed (Part-time)' }}>Employed (Part-time)</option>
+                            <option value="Self-Employed" {{ 'selected' if application.applicant_data.get('employment_status') == 'Self-Employed' }}>Self-Employed</option>
+                            <option value="Student" {{ 'selected' if application.applicant_data.get('employment_status') == 'Student' }}>Student</option>
+                            <option value="Unemployed" {{ 'selected' if application.applicant_data.get('employment_status') == 'Unemployed' }}>Unemployed</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Monthly Income (₦)</label>
+                        <input type="number" class="form-control" name="monthly_income" 
+                               value="{{ application.applicant_data.get('monthly_income', 0) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Employer Name</label>
+                        <input type="text" class="form-control" name="employer_name" 
+                               value="{{ application.applicant_data.get('employer_name', '') }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Airtime & Banking Verification -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Airtime & Banking Verification</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Bank Name</label>
+                        <input type="text" class="form-control" name="bank_name" 
+                               value="{{ application.applicant_data.get('bank_name', '') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Average Monthly Balance (₦)</label>
+                        <input type="number" class="form-control" name="avg_monthly_balance" 
+                               value="{{ application.applicant_data.get('avg_monthly_balance', 0) }}">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label">Airtime Month 1 (₦)</label>
+                            <input type="number" class="form-control" name="airtime_spend_m1" 
+                                   value="{{ application.applicant_data.get('airtime_spend_m1', 0) }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Airtime Month 2 (₦)</label>
+                            <input type="number" class="form-control" name="airtime_spend_m2" 
+                                   value="{{ application.applicant_data.get('airtime_spend_m2', 0) }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Airtime Month 3 (₦)</label>
+                            <input type="number" class="form-control" name="airtime_spend_m3" 
+                                   value="{{ application.applicant_data.get('airtime_spend_m3', 0) }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('admin_pending_applications') }}" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i> Complete Verification
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- JavaScript for status alerts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.querySelector('select[name="overall_status"]');
+    
+    statusSelect.addEventListener('change', function() {
+        if (this.value === 'Verified') {
+            alert('Application will be marked as Verified and score will be calculated based on document verification status.');
+        } else if (this.value === 'Rejected') {
+            alert('Application will be rejected and no score will be calculated.');
+        }
+    });
+});
+</script>
+{% endblock %}

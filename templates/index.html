@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title text-center mb-0">
+                    <i class="fas fa-wave"></i> Welcome to TideScore
+                </h4>
+                <p class="text-center mb-0 mt-1">Login or create your account</p>
+            </div>
+            <div class="card-body p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'info' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('auth.login') }}" id="authForm">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address
+                        </label>
+                        <input type="email" class="form-control form-control-lg" id="email" name="email" required 
+                               placeholder="your.email@example.com" value="{{ email if email }}"
+                               autocomplete="email">
+                    </div>
+                    
+                    <!-- PASSWORD FIELD - ALWAYS VISIBLE -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                               placeholder="Enter your password" required>
+                        <div class="form-text">
+                            <i class="fas fa-shield-alt"></i> Enter your password to login or sign up
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" name="action" value="login" 
+                                class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                        <button type="submit" name="action" value="signup" 
+                                class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-key"></i> Secure password authentication
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Card -->
+        <div class="card mt-4 shadow">
+            <div class="card-body">
+                <h6 class="card-title text-primary">
+                    <i class="fas fa-info-circle"></i> About TideScore
+                </h6>
+                <div class="row">
+                    <div class="col-12">
+                        <p class="card-text small mb-1">
+                            <i class="fas fa-user-plus text-success"></i> 
+                            <strong>New Users:</strong> Sign up with email and password
+                        </p>
+                        <p class="card-text small mb-1">
+                            <i class="fas fa-sign-in-alt text-primary"></i> 
+                            <strong>Returning Users:</strong> Login with your credentials
+                        </p>
+                        <p class="card-text small mb-0">
+                            <i class="fas fa-lock text-warning"></i> 
+                            <strong>Secure:</strong> Your data is protected
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 15px;
+}
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
+.btn {
+    border-radius: 10px;
+}
+.form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const authForm = document.getElementById('authForm');
+
+    // Form submission validation
+    authForm.addEventListener('submit', function(e) {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        if (!email || email.indexOf('@') === -1) {
+            e.preventDefault();
+            alert('Please enter a valid email address');
+            emailInput.focus();
+            return;
+        }
+        
+        if (!password) {
+            e.preventDefault();
+            alert('Please enter your password');
+            passwordInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %}
