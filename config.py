@@ -23,18 +23,17 @@ class Config:
     # Application Settings
     FLASK_ENV = os.environ.get("FLASK_ENV", "development")
     
-    # Database configuration
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", 'sqlite:///tidescore.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # MongoDB configuration (replaced SQLAlchemy)
+    MONGODB_URI = os.environ.get("MONGODB_URI")
     
     # Validation - Only require essential variables
     @classmethod
     def validate_config(cls):
-        required_vars = ['SECRET_KEY']  # Only secret key is absolutely required
-        missing = [var for var in required_vars if not getattr(cls, var)]
+        required_vars = ['SECRET_KEY', 'MONGODB_URI']  # Added MONGODB_URI as required
+        missing = [var for var in required_vars if not os.environ.get(var)]
         
         if missing:
-            raise ValueError(f"Missing required environment variables: {', '.join(missing)}. Please check your .env file")
+            raise ValueError(f"Missing required environment variables: {', '.join(missing)}. Please check your environment configuration.")
 
 # Validate configuration
 Config.validate_config()

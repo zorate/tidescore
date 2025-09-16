@@ -6,133 +6,120 @@
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h4 class="card-title mb-0">New Credit Application</h4>
-                <small class="fst-italic">Submit your information for verification</small>
+                <small class="fst-italic">Complete all sections for accurate TideScore calculation</small>
             </div>
             <div class="card-body">
                 <form id="tidescoreForm" enctype="multipart/form-data">
                     <!-- Personal Information -->
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Personal Information</h5>
+                        <h5 class="border-bottom pb-2"><i class="fas fa-user"></i> Personal Information</h5>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Full Name</label>
+                                <label class="form-label">Full Name *</label>
                                 <input type="text" class="form-control" name="full_name" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Email Address</label>
+                                <label class="form-label">Email Address *</label>
                                 <input type="email" class="form-control" name="email" required>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Phone Number</label>
+                                <label class="form-label">Phone Number *</label>
                                 <input type="tel" class="form-control" name="phone" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Date of Birth</label>
+                                <label class="form-label">Date of Birth *</label>
                                 <input type="date" class="form-control" name="dob" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Education Level *</label>
+                                <select class="form-select" name="education_level" required>
+                                    <option value="">Select Education Level</option>
+                                    <option value="PhD">PhD</option>
+                                    <option value="Masters">Masters</option>
+                                    <option value="HND/B.Sc">HND/B.Sc</option>
+                                    <option value="OND/NCE">OND/NCE</option>
+                                    <option value="Secondary School">Secondary School</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
                     <!-- Employment Information -->
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Employment Information</h5>
+                        <h5 class="border-bottom pb-2"><i class="fas fa-briefcase"></i> Employment Information</h5>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Employment Status</label>
+                                <label class="form-label">Employment Status *</label>
                                 <select class="form-select" name="employment_status" required>
                                     <option value="">Select Status</option>
                                     <option value="Employed (Full-time)">Employed (Full-time)</option>
-                                    <option value="Employed (Part-time)">Employed (Part-time)</option>
                                     <option value="Self-Employed (Business Owner)">Self-Employed (Business Owner)</option>
+                                    <option value="Employed (Part-time)">Employed (Part-time)</option>
                                     <option value="Student">Student</option>
                                     <option value="Unemployed">Unemployed</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Employer Name</label>
+                                <label class="form-label">Employer/Business Name</label>
                                 <input type="text" class="form-control" name="employer_name">
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Monthly Income (₦)</label>
-                                <input type="number" class="form-control" name="monthly_income" min="0">
+                                <label class="form-label">Monthly Income (₦) *</label>
+                                <input type="number" class="form-control" name="monthly_income" min="0" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Employment Proof (Payslip/Letter)</label>
-                                <input type="file" class="form-control" name="employment_proof" accept=".pdf,.jpg,.jpeg,.png">
+                                <label class="form-label">Employment Proof (Payslip/Letter) *</label>
+                                <input type="file" class="form-control" name="employment_proof" accept=".pdf,.jpg,.jpeg,.png" required>
                             </div>
                         </div>
                     </div>
 
                     <!-- Airtime & Data Usage -->
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Airtime & Data Usage (Last 3 Months)</h5>
+                        <h5 class="border-bottom pb-2"><i class="fas fa-mobile-alt"></i> Airtime & Data Usage (Last 3 Months)</h5>
                         
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Airtime Spend - Month 1 (₦)</label>
-                                <input type="number" class="form-control" name="airtime_spend_m1" value="0" min="0">
+                                <label class="form-label">Airtime Spend - Month 1 (₦) *</label>
+                                <input type="number" class="form-control" name="airtime_spend_m1" value="0" min="0" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Airtime Spend - Month 2 (₦)</label>
-                                <input type="number" class="form-control" name="airtime_spend_m2" value="0" min="0">
+                                <label class="form-label">Airtime Spend - Month 2 (₦) *</label>
+                                <input type="number" class="form-control" name="airtime_spend_m2" value="0" min="0" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Airtime Spend - Month 3 (₦)</label>
-                                <input type="number" class="form-control" name="airtime_spend_m3" value="0" min="0">
+                                <label class="form-label">Airtime Spend - Month 3 (₦) *</label>
+                                <input type="number" class="form-control" name="airtime_spend_m3" value="0" min="0" required>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-12">
-                                <label class="form-label">Airtime Statement Proof (Screenshots/PDF)</label>
-                                <input type="file" class="form-control" name="airtime_proof" accept=".pdf,.jpg,.jpeg,.png">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bill Payments -->
-                    <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Bill Payments</h5>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Electricity Bill Proof</label>
-                                <input type="file" class="form-control" name="electricity_proof" accept=".pdf,.jpg,.jpeg,.png">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">DSTV/GOtv Subscription Proof</label>
-                                <input type="file" class="form-control" name="dstv_proof" accept=".pdf,.jpg,.jpeg,.png">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Internet Bill Proof</label>
-                                <input type="file" class="form-control" name="internet_proof" accept=".pdf,.jpg,.jpeg,.png">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Water Bill Proof</label>
-                                <input type="file" class="form-control" name="water_proof" accept=".pdf,.jpg,.jpeg,.png">
+                                <label class="form-label">Airtime Statement Proof (Screenshots/PDF) *</label>
+                                <input type="file" class="form-control" name="airtime_proof" accept=".pdf,.jpg,.jpeg,.png" required>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bank Information -->
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Bank Account Information</h5>
+                        <h5 class="border-bottom pb-2"><i class="fas fa-university"></i> Bank Account Information</h5>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Bank Name</label>
-                                <input type="text" class="form-control" name="bank_name">
+                                <label class="form-label">Bank Name *</label>
+                                <input type="text" class="form-control" name="bank_name" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Account Number</label>
@@ -142,39 +129,104 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Bank Statement (Last 3 months)</label>
-                                <input type="file" class="form-control" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png">
+                                <label class="form-label">Bank Statement (Last 3 months) *</label>
+                                <input type="file" class="form-control" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Average Monthly Balance (₦)</label>
-                                <input type="number" class="form-control" name="avg_monthly_balance" value="0" min="0">
+                                <label class="form-label">Average Monthly Balance (₦) *</label>
+                                <input type="number" class="form-control" name="avg_monthly_balance" value="0" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bill Payments -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2"><i class="fas fa-receipt"></i> Bill Payments (Check all that apply)</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="electricity_verified">
+                                    <label class="form-check-label">Electricity Bills</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="dstv_verified">
+                                    <label class="form-check-label">DSTV/GOtv Subscription</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="internet_verified">
+                                    <label class="form-check-label">Internet Bills</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="water_verified">
+                                    <label class="form-check-label">Water Bills</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="rent_verified">
+                                    <label class="form-check-label">Rent Payments</label>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Guarantors -->
                     <div class="mb-4">
-                        <h5 class="border-bottom pb-2">Guarantors Information</h5>
+                        <h5 class="border-bottom pb-2"><i class="fas fa-users"></i> Guarantors Information</h5>
                         
+                        <h6>Guarantor 1 *</h6>
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Guarantor 1 Name</label>
-                                <input type="text" class="form-control" name="g1_name">
+                            <div class="col-md-4">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" name="g1_name" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Guarantor 1 Phone Number</label>
-                                <input type="tel" class="form-control" name="g1_phone">
+                            <div class="col-md-4">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" name="g1_phone" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Relationship *</label>
+                                <select class="form-select" name="g1_relationship" required>
+                                    <option value="">Select Relationship</option>
+                                    <option value="Family Member">Family Member</option>
+                                    <option value="Religious Leader">Religious Leader</option>
+                                    <option value="Friend">Friend</option>
+                                    <option value="Colleague">Colleague</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                         </div>
 
+                        <h6>Guarantor 2 *</h6>
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Guarantor 2 Name</label>
-                                <input type="text" class="form-control" name="g2_name">
+                            <div class="col-md-4">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" name="g2_name" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Guarantor 2 Phone Number</label>
-                                <input type="tel" class="form-control" name="g2_phone">
+                            <div class="col-md-4">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" name="g2_phone" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Relationship *</label>
+                                <select class="form-select" name="g2_relationship" required>
+                                    <option value="">Select Relationship</option>
+                                    <option value="Family Member">Family Member</option>
+                                    <option value="Religious Leader">Religious Leader</option>
+                                    <option value="Friend">Friend</option>
+                                    <option value="Colleague">Colleague</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -184,7 +236,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="consent" required>
                             <label class="form-check-label">
-                                I consent to TideScore verifying the information provided and contacting my guarantors if necessary.
+                                I consent to TideScore verifying the information provided and contacting my guarantors if necessary. *
                             </label>
                         </div>
                     </div>

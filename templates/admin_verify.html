@@ -22,6 +22,7 @@
                     <p><strong>Name:</strong> {{ application.applicant_data.get('full_name', 'N/A') }}</p>
                     <p><strong>Email:</strong> {{ application.user_email }}</p>
                     <p><strong>Phone:</strong> {{ application.applicant_data.get('phone', 'N/A') }}</p>
+                    <p><strong>Education:</strong> {{ application.applicant_data.get('education_level', 'N/A') }}</p>
                     <p><strong>Submitted:</strong> {{ application.get_formatted_date() }}</p>
                 </div>
             </div>
@@ -83,7 +84,7 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Overall Status</label>
+                        <label class="form-label">Overall Status *</label>
                         <select class="form-select" name="overall_status" required>
                             <option value="Pending" {{ 'selected' if application.verification_status == 'Pending' }}>Pending</option>
                             <option value="Under Review" {{ 'selected' if application.verification_status == 'Under Review' }}>Under Review</option>
@@ -208,71 +209,161 @@
         </div>
     </div>
 
-    <!-- Verification Sections -->
+    <!-- ===== NEW VERIFICATION SECTIONS ===== -->
+    
+    <!-- Education Verification -->
     <div class="row mt-4">
-        <!-- Employment Verification -->
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">Employment Verification</h6>
+                    <h6 class="mb-0">Education Verification</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Employment Status</label>
-                        <select class="form-select" name="employment_status">
-                            <option value="Employed (Full-time)" {{ 'selected' if application.applicant_data.get('employment_status') == 'Employed (Full-time)' }}>Employed (Full-time)</option>
-                            <option value="Employed (Part-time)" {{ 'selected' if application.applicant_data.get('employment_status') == 'Employed (Part-time)' }}>Employed (Part-time)</option>
-                            <option value="Self-Employed" {{ 'selected' if application.applicant_data.get('employment_status') == 'Self-Employed' }}>Self-Employed</option>
-                            <option value="Student" {{ 'selected' if application.applicant_data.get('employment_status') == 'Student' }}>Student</option>
-                            <option value="Unemployed" {{ 'selected' if application.applicant_data.get('employment_status') == 'Unemployed' }}>Unemployed</option>
+                        <label class="form-label">Education Level Status</label>
+                        <select class="form-select" name="education_verified">
+                            <option value="Pending">Pending Review</option>
+                            <option value="Verified">✅ Verified</option>
+                            <option value="Rejected">❌ Rejected</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Monthly Income (₦)</label>
-                        <input type="number" class="form-control" name="monthly_income" 
-                               value="{{ application.applicant_data.get('monthly_income', 0) }}">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Employer Name</label>
-                        <input type="text" class="form-control" name="employer_name" 
-                               value="{{ application.applicant_data.get('employer_name', '') }}">
+                        <label class="form-label">Education Notes</label>
+                        <textarea class="form-control" name="education_notes" placeholder="Education verification notes..." rows="2"></textarea>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Airtime & Banking Verification -->
+        <!-- Residency Verification -->
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">Airtime & Banking Verification</h6>
+                    <h6 class="mb-0">Residency Verification</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Bank Name</label>
-                        <input type="text" class="form-control" name="bank_name" 
-                               value="{{ application.applicant_data.get('bank_name', '') }}">
+                        <label class="form-label">Residency Status</label>
+                        <select class="form-select" name="residency_verified">
+                            <option value="Pending">Pending Review</option>
+                            <option value="Verified">✅ Verified</option>
+                            <option value="Rejected">❌ Rejected</option>
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Average Monthly Balance (₦)</label>
-                        <input type="number" class="form-control" name="avg_monthly_balance" 
-                               value="{{ application.applicant_data.get('avg_monthly_balance', 0) }}">
+                        <label class="form-label">Residency Notes</label>
+                        <textarea class="form-control" name="residency_notes" placeholder="Residency verification notes..." rows="2"></textarea>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-4">
-                            <label class="form-label">Airtime Month 1 (₦)</label>
-                            <input type="number" class="form-control" name="airtime_spend_m1" 
-                                   value="{{ application.applicant_data.get('airtime_spend_m1', 0) }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Payments Verification -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Bill Payments Verification</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="electricity_verified" 
+                                    {{ 'checked' if application.applicant_data.get('electricity_verified') == 'Yes' }}>
+                                <label class="form-check-label">Electricity Bills Verified</label>
+                            </div>
                         </div>
-                        <div class="col-4">
-                            <label class="form-label">Airtime Month 2 (₦)</label>
-                            <input type="number" class="form-control" name="airtime_spend_m2" 
-                                   value="{{ application.applicant_data.get('airtime_spend_m2', 0) }}">
+                        <div class="col-md-4">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="dstv_verified"
+                                    {{ 'checked' if application.applicant_data.get('dstv_verified') == 'Yes' }}>
+                                <label class="form-check-label">DSTV/GOtv Verified</label>
+                            </div>
                         </div>
-                        <div class="col-4">
-                            <label class="form-label">Airtime Month 3 (₦)</label>
-                            <input type="number" class="form-control" name="airtime_spend_m3" 
-                                   value="{{ application.applicant_data.get('airtime_spend_m3', 0) }}">
+                        <div class="col-md-4">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="internet_verified"
+                                    {{ 'checked' if application.applicant_data.get('internet_verified') == 'Yes' }}>
+                                <label class="form-check-label">Internet Bills Verified</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="water_verified"
+                                    {{ 'checked' if application.applicant_data.get('water_verified') == 'Yes' }}>
+                                <label class="form-check-label">Water Bills Verified</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="rent_verified"
+                                    {{ 'checked' if application.applicant_data.get('rent_verified') == 'Yes' }}>
+                                <label class="form-check-label">Rent Payments Verified</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guarantors Verification -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0">Guarantors Verification</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Guarantor 1 -->
+                        <div class="col-md-6">
+                            <h6>Guarantor 1: {{ application.applicant_data.get('g1_name', 'N/A') }}</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Verification</label>
+                                <select class="form-select" name="g1_verified">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Verified">✅ Verified</option>
+                                    <option value="Rejected">❌ Rejected</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Relationship Confirmed</label>
+                                <select class="form-select" name="g1_relationship_confirmed">
+                                    <option value="No">No</option>
+                                    <option value="Yes">✅ Yes</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Guarantor Notes</label>
+                                <textarea class="form-control" name="g1_notes" placeholder="Guarantor 1 verification notes..." rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Guarantor 2 -->
+                        <div class="col-md-6">
+                            <h6>Guarantor 2: {{ application.applicant_data.get('g2_name', 'N/A') }}</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Verification</label>
+                                <select class="form-select" name="g2_verified">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Verified">✅ Verified</option>
+                                    <option value="Rejected">❌ Rejected</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Relationship Confirmed</label>
+                                <select class="form-select" name="g2_relationship_confirmed">
+                                    <option value="No">No</option>
+                                    <option value="Yes">✅ Yes</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Guarantor Notes</label>
+                                <textarea class="form-control" name="g2_notes" placeholder="Guarantor 2 verification notes..." rows="2"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -302,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     statusSelect.addEventListener('change', function() {
         if (this.value === 'Verified') {
-            alert('Application will be marked as Verified and score will be calculated based on document verification status.');
+            alert('Application will be marked as Verified and score will be calculated based on all verification data.');
         } else if (this.value === 'Rejected') {
             alert('Application will be rejected and no score will be calculated.');
         }

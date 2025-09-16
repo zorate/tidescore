@@ -1,403 +1,435 @@
-import sqlite3
-import json
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from bson import ObjectId
 from datetime import datetime
-from typing import List, Dict, Any, Optional
 import bcrypt
 import os
-from pathlib import Path
-from werkzeug.utils import secure_filename
+from config import Config
+import json
+
+# MongoDB connection
+try:
+    client = MongoClient(Config.MONGODB_URI)
+    mongo_db = client.get_database()
+    print("Successfully connected to MongoDB!")
+except Exception as e:
+    print(f"Error connecting to MongoDB: {e}")
+    mongo_db = None
 
 class Database:
-    def __init__(self, db_path: str = None):
-        # Use persistent storage directory on Render, fallback to local
-        if not db_path:
-            # On Render, use /tmp/data for persistent storage
-            data_dir = os.environ.get('DATA_DIR', '/tmp/data')
-            
-            # Create directory if it doesn't exist
-            Path(data_dir).mkdir(exist_ok=True, parents=True)
-            
-            # Set database path
-            db_path = os.path.join(data_dir, 'tidescore.db')
-            print(f"Database path: {db_path}")  # Debug output
-        
-        self.db_path = db_path
-        print(f"Initializing database at: {self.db_path}")  # Debug
+    def __init__(self):
+        self.db = mongo_db
         self.init_db()
     
-    def get_connection(self):
-        """Get a database connection with proper configuration"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        
-        # Enable foreign keys and better performance
-        conn.execute('PRAGMA foreign_keys = ON')
-        conn.execute('PRAGMA journal_mode = WAL')
-        conn.execute('PRAGMA synchronous = NORMAL')
-        
-        return conn
-    
     def init_db(self):
-        """Initialize the database with ALL required tables"""
+        """Initialize database collections and indexes"""
+        if self.db is None:
+            print("Database connection is None, skipping initialization")
+            return
+            
         try:
-            with self.get_connection() as conn:
-                cursor = conn.cursor()
-                
-                # ===== USERS TABLE FOR AUTHENTICATION =====
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS users (
-                        id TEXT PRIMARY KEY,
-                        email TEXT UNIQUE NOT NULL,
-                        password_hash TEXT NOT NULL,
-                        is_admin BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        last_login TIMESTAMP
-                    )
-                ''')
-                
-                # ===== APPLICATIONS TABLE =====
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS applications (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id TEXT NOT NULL,
-                        user_email TEXT NOT NULL,
-                        applicant_data TEXT NOT NULL,
-                        verification_status TEXT DEFAULT 'Pending',
-                        admin_verified_data TEXT,
-                        score_result TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        verified_at TIMESTAMP,
-                        verified_by TEXT,
-                        files_path TEXT,
-                        file_verification_status TEXT DEFAULT '{}',
-                        FOREIGN KEY (user_id) REFERENCES users (id)
-                    )
-                ''')
-                
-                # ===== VERIFICATION HISTORY TABLE =====
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS verification_history (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        application_id INTEGER,
-                        admin_email TEXT,
-                        action TEXT,
-                        field_name TEXT,
-                        old_value TEXT,
-                        new_value TEXT,
-                        notes TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (application_id) REFERENCES applications (id)
-                    )
-                ''')
-                
-                # ===== CREATE ADMIN USER WITH SECURE PASSWORD =====
-                admin_password = os.environ.get('ADMIN_PASSWORD', 'ChangeThisPassword123!')
-                admin_password_hash = bcrypt.hashpw(admin_password.encode(), bcrypt.gensalt()).decode()
-                
-                cursor.execute('''
-                    INSERT OR IGNORE INTO users (id, email, password_hash, is_admin)
-                    VALUES ('admin-user', 'admin@tidescore.com', ?, TRUE)
-                ''', (admin_password_hash,))
-                
-                conn.commit()
-                print("Database initialized successfully!")
+            # Create indexes
+            self.db.users.create_index([("email", ASCENDING)], unique=True)
+            self.db.applications.create_index([("user_id", ASCENDING)])
+            self.db.applications.create_index([("user_email", ASCENDING)])
+            self.db.applications.create_index([("verification_status", ASCENDING)])
+            self.db.verification_history.create_index([("application_id", ASCENDING)])
+            
+            # Create admin user if it doesn't exist
+            admin_email = "admin@tidescore.com"
+            admin_password = os.environ.get('ADMIN_PASSWORD', 'ChangeThisPassword123!')
+            
+            if not self.get_user_by_email(admin_email):
+                password_hash = bcrypt.hashpw(admin_password.encode(), bcrypt.gensalt()).decode()
+                self.add_user("admin-user", admin_email, password_hash, True)
+                print("Admin user created successfully!")
                 
         except Exception as e:
-            print(f"Error initializing database: {e}")
-            # Fallback to local database if persistent storage fails
-            if self.db_path != 'tidescore.db':
-                print("Falling back to local database...")
-                self.db_path = 'tidescore.db'
-                self.init_db()  # Retry with local path
+            print(f"Error during database initialization: {e}")
 
-    # ==================== NEW USER AUTHENTICATION METHODS ====================
-    def add_user(self, user_id: str, email: str, password_hash: str, is_admin: bool = False) -> bool:
+    # ===== USER METHODS =====
+    def add_user(self, user_id, email, password_hash, is_admin=False):
         """Add a new user to the database"""
+        if self.db is None:
+            print("Database connection is None, cannot add user")
+            return False
+            
         try:
-            with self.get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT INTO users (id, email, password_hash, is_admin)
-                    VALUES (?, ?, ?, ?)
-                ''', (user_id, email, password_hash, is_admin))
-                conn.commit()
-                return True
-        except sqlite3.IntegrityError:
-            return False  # User already exists
+            user_data = {
+                "_id": user_id,
+                "email": email,
+                "password_hash": password_hash,
+                "is_admin": is_admin,
+                "created_at": datetime.utcnow(),
+                "last_login": None
+            }
+            result = self.db.users.insert_one(user_data)
+            return result.inserted_id is not None
+        except Exception as e:
+            print(f"Error adding user: {e}")
+            return False
     
-    def get_user_by_email(self, email: str) -> Optional[dict]:
+    def get_user_by_email(self, email):
         """Get user by email address"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
-            user = cursor.fetchone()
-            return dict(user) if user else None
+        if self.db is None:
+            print("Database connection is None, cannot get user")
+            return None
+            
+        try:
+            return self.db.users.find_one({"email": email})
+        except Exception as e:
+            print(f"Error getting user: {e}")
+            return None
     
-    def verify_user_password(self, email: str, password: str) -> bool:
+    def verify_user_password(self, email, password):
         """Verify user password using bcrypt"""
         user = self.get_user_by_email(email)
         if user:
             return bcrypt.checkpw(password.encode(), user['password_hash'].encode())
         return False
     
-    def update_last_login(self, user_id: str):
+    def update_last_login(self, user_id):
         """Update user's last login timestamp"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?
-            ''', (user_id,))
-            conn.commit()
+        if self.db is None:
+            print("Database connection is None, cannot update last login")
+            return False
+            
+        try:
+            self.db.users.update_one(
+                {"_id": user_id},
+                {"$set": {"last_login": datetime.utcnow()}}
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating last login: {e}")
+            return False
 
-    # ==================== EXISTING APPLICATION METHODS (KEEP ALL THESE) ====================
+    # ===== APPLICATION METHODS =====
     def add_application(self, user_id, user_email, applicant_data, files_path=None):
         """Add a new application submission"""
+        if self.db is None:
+            print("Database connection is None, cannot add application")
+            return None
+            
         try:
-            with self.get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT INTO applications (user_id, user_email, applicant_data, files_path, verification_status, file_verification_status)
-                    VALUES (?, ?, ?, ?, 'Pending', '{}')
-                ''', (user_id, user_email, json.dumps(applicant_data), files_path))
-                conn.commit()
-                return cursor.lastrowid
+            application_data = {
+                "user_id": user_id,
+                "user_email": user_email,
+                "applicant_data": applicant_data,
+                "files_path": files_path,
+                "verification_status": "Pending",
+                "file_verification_status": {},
+                "created_at": datetime.utcnow(),
+                "verified_at": None,
+                "verified_by": None,
+                "admin_verified_data": None,
+                "score_result": None
+            }
+            result = self.db.applications.insert_one(application_data)
+            return str(result.inserted_id)
         except Exception as e:
             print(f"Error adding application: {e}")
-            return -1
+            return None
     
     def get_pending_applications(self):
         """Get all applications pending verification"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM applications 
-                WHERE verification_status = 'Pending' 
-                ORDER BY created_at DESC
-            ''')
-            return cursor.fetchall()
+        if self.db is None:
+            print("Database connection is None, cannot get pending applications")
+            return []
+            
+        try:
+            applications = self.db.applications.find(
+                {"verification_status": "Pending"}
+            ).sort("created_at", DESCENDING)
+            return [Application.from_dict(app) for app in applications]
+        except Exception as e:
+            print(f"Error getting pending applications: {e}")
+            return []
     
     def get_application_for_verification(self, app_id):
         """Get application details for verification"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM applications WHERE id = ?', (app_id,))
-            return cursor.fetchone()
+        if self.db is None:
+            print("Database connection is None, cannot get application for verification")
+            return None
+            
+        try:
+            application = self.db.applications.find_one({"_id": ObjectId(app_id)})
+            return Application.from_dict(application) if application else None
+        except Exception as e:
+            print(f"Error getting application for verification: {e}")
+            return None
     
     def update_verification(self, app_id, admin_email, verified_data, score_result, status='Verified'):
         """Update application verification status and scores"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE applications 
-                SET verification_status = ?, 
-                    admin_verified_data = ?, 
-                    score_result = ?,
-                    verified_at = CURRENT_TIMESTAMP,
-                    verified_by = ?
-                WHERE id = ?
-            ''', (status, json.dumps(verified_data), json.dumps(score_result), admin_email, app_id))
-            conn.commit()
+        if self.db is None:
+            print("Database connection is None, cannot update verification")
+            return False
+            
+        try:
+            self.db.applications.update_one(
+                {"_id": ObjectId(app_id)},
+                {"$set": {
+                    "verification_status": status,
+                    "admin_verified_data": verified_data,
+                    "score_result": score_result,
+                    "verified_at": datetime.utcnow(),
+                    "verified_by": admin_email
+                }}
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating verification: {e}")
+            return False
     
-    def update_application_files(self, app_id, files_data):
-        """Update application files metadata"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE applications 
-                SET files_path = ?
-                WHERE id = ?
-            ''', (files_data, app_id))
-            conn.commit()
-
     def update_verification_status_only(self, app_id, status, admin_email, notes=None):
         """Update only the verification status without score data"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE applications 
-                SET verification_status = ?,
-                    verified_at = CURRENT_TIMESTAMP,
-                    verified_by = ?
-                WHERE id = ?
-            ''', (status, admin_email, app_id))
-            conn.commit()
-        
-        # Add to verification history
-        self.add_verification_history(
-            app_id,
-            admin_email,
-            f'Status changed to {status}',
-            notes=notes
-        )
+        if self.db is None:
+            print("Database connection is None, cannot update verification status")
+            return False
+            
+        try:
+            self.db.applications.update_one(
+                {"_id": ObjectId(app_id)},
+                {"$set": {
+                    "verification_status": status,
+                    "verified_at": datetime.utcnow(),
+                    "verified_by": admin_email
+                }}
+            )
+            
+            # Add to verification history
+            self.add_verification_history(
+                app_id,
+                admin_email,
+                f'Status changed to {status}',
+                notes=notes
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating verification status: {e}")
+            return False
     
     def add_verification_history(self, app_id, admin_email, action, field_name=None, old_value=None, new_value=None, notes=None):
         """Add entry to verification history"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO verification_history (application_id, admin_email, action, field_name, old_value, new_value, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (app_id, admin_email, action, field_name, old_value, new_value, notes))
-            conn.commit()
+        if self.db is None:
+            print("Database connection is None, cannot add verification history")
+            return False
+            
+        try:
+            history_data = {
+                "application_id": ObjectId(app_id),
+                "admin_email": admin_email,
+                "action": action,
+                "field_name": field_name,
+                "old_value": old_value,
+                "new_value": new_value,
+                "notes": notes,
+                "created_at": datetime.utcnow()
+            }
+            self.db.verification_history.insert_one(history_data)
+            return True
+        except Exception as e:
+            print(f"Error adding verification history: {e}")
+            return False
     
     def get_verification_history(self, app_id):
         """Get verification history for an application"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM verification_history 
-                WHERE application_id = ? 
-                ORDER BY created_at DESC
-            ''', (app_id,))
-            return cursor.fetchall()
-
-    # File verification methods
+        if self.db is None:
+            print("Database connection is None, cannot get verification history")
+            return []
+            
+        try:
+            history = self.db.verification_history.find(
+                {"application_id": ObjectId(app_id)}
+            ).sort("created_at", DESCENDING)
+            return list(history)
+        except Exception as e:
+            print(f"Error getting verification history: {e}")
+            return []
+    
     def update_file_verification_status(self, app_id, file_type, status, admin_notes=None):
         """Update verification status for a specific file"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT file_verification_status FROM applications WHERE id = ?', (app_id,))
-            result = cursor.fetchone()
-            current_status = json.loads(result['file_verification_status']) if result and result['file_verification_status'] else {}
+        if self.db is None:
+            print("Database connection is None, cannot update file verification status")
+            return {}
+            
+        try:
+            # Get current status
+            application = self.db.applications.find_one({"_id": ObjectId(app_id)})
+            if not application:
+                return {}
+                
+            current_status = application.get('file_verification_status', {})
             
             # Update the specific file status
             old_status = current_status.get(file_type, 'Pending')
             current_status[file_type] = status
             
             # Save back to database
-            cursor.execute('''
-                UPDATE applications 
-                SET file_verification_status = ?
-                WHERE id = ?
-            ''', (json.dumps(current_status), app_id))
-            conn.commit()
-        
-        # Add to history
-        if admin_notes:
-            self.add_verification_history(
-                app_id, 
-                'system', 
-                'File Verification', 
-                f'{file_type}_status',
-                old_status,
-                status,
-                admin_notes
+            self.db.applications.update_one(
+                {"_id": ObjectId(app_id)},
+                {"$set": {"file_verification_status": current_status}}
             )
-        
-        return current_status
-
-    def get_file_verification_status(self, app_id):
-        """Get file verification status for an application"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT file_verification_status FROM applications WHERE id = ?', (app_id,))
-            result = cursor.fetchone()
             
-        if result and result['file_verification_status']:
-            return json.loads(result['file_verification_status'])
-        return {
-            'employment_proof': 'Pending',
-            'airtime_proof': 'Pending',
-            'bank_statement': 'Pending'
-        }
-
-    # Existing methods with updates
+            # Add to history
+            if admin_notes:
+                self.add_verification_history(
+                    app_id, 
+                    'system', 
+                    'File Verification', 
+                    f'{file_type}_status',
+                    old_status,
+                    status,
+                    admin_notes
+                )
+            
+            return current_status
+        except Exception as e:
+            print(f"Error updating file verification status: {e}")
+            return {}
+    
     def get_user_applications(self, user_id):
         """Get all applications for a user"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM applications 
-                WHERE user_id = ? 
-                ORDER BY created_at DESC
-            ''', (user_id,))
-            return cursor.fetchall()
+        if self.db is None:
+            print("Database connection is None, cannot get user applications")
+            return []
+            
+        try:
+            applications = self.db.applications.find(
+                {"user_id": user_id}
+            ).sort("created_at", DESCENDING)
+            return [Application.from_dict(app) for app in applications]
+        except Exception as e:
+            print(f"Error getting user applications: {e}")
+            return []
     
     def get_application_by_id(self, app_id):
         """Get a specific application by ID"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM applications WHERE id = ?', (app_id,))
-            return cursor.fetchone()
-
+        if self.db is None:
+            print("Database connection is None, cannot get application by ID")
+            return None
+            
+        try:
+            application = self.db.applications.find_one({"_id": ObjectId(app_id)})
+            return Application.from_dict(application) if application else None
+        except Exception as e:
+            print(f"Error getting application by ID: {e}")
+            return None
+    
     def get_all_applications(self, limit=100):
         """Get all applications from all users"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM applications 
-                ORDER BY created_at DESC 
-                LIMIT ?
-            ''', (limit,))
-            return cursor.fetchall()
+        if self.db is None:
+            print("Database connection is None, cannot get all applications")
+            return []
+            
+        try:
+            applications = self.db.applications.find().sort("created_at", DESCENDING).limit(limit)
+            return [Application.from_dict(app) for app in applications]
+        except Exception as e:
+            print(f"Error getting all applications: {e}")
+            return []
     
     def get_application_count(self):
         """Get total number of applications"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT COUNT(*) FROM applications')
-            return cursor.fetchone()[0]
+        if self.db is None:
+            print("Database connection is None, cannot get application count")
+            return 0
+            
+        try:
+            return self.db.applications.count_documents({})
+        except Exception as e:
+            print(f"Error getting application count: {e}")
+            return 0
     
     def get_verification_stats(self):
         """Get verification statistics"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT verification_status, COUNT(*) 
-                FROM applications 
-                GROUP BY verification_status
-            ''')
-            return dict(cursor.fetchall())
+        if self.db is None:
+            print("Database connection is None, cannot get verification stats")
+            return {}
+            
+        try:
+            pipeline = [
+                {"$group": {
+                    "_id": "$verification_status",
+                    "count": {"$sum": 1}
+                }}
+            ]
+            results = list(self.db.applications.aggregate(pipeline))
+            return {result["_id"]: result["count"] for result in results}
+        except Exception as e:
+            print(f"Error getting verification stats: {e}")
+            return {}
     
     def get_average_score(self):
         """Get average TideScore across verified applications"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT score_result FROM applications 
-                WHERE verification_status = 'Verified' AND score_result IS NOT NULL
-            ''')
-            scores = cursor.fetchall()
-        
-        total_score = 0
-        count = 0
-        
-        for score_row in scores:
-            try:
-                score_data = json.loads(score_row[0])
-                total_score += score_data.get('scaled_score', 0)
-                count += 1
-            except:
-                continue
-        
-        return round(total_score / count, 2) if count > 0 else 0
-
+        if self.db is None:
+            print("Database connection is None, cannot get average score")
+            return 0
+            
+        try:
+            pipeline = [
+                {"$match": {
+                    "verification_status": "Verified",
+                    "score_result.scaled_score": {"$exists": True}
+                }},
+                {"$group": {
+                    "_id": None,
+                    "avg_score": {"$avg": "$score_result.scaled_score"}
+                }}
+            ]
+            result = list(self.db.applications.aggregate(pipeline))
+            return round(result[0]["avg_score"], 2) if result else 0
+        except Exception as e:
+            print(f"Error getting average score: {e}")
+            return 0
+    
     def get_risk_distribution(self):
         """Get count of applications by risk level"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT score_result FROM applications 
-                WHERE verification_status = 'Verified' AND score_result IS NOT NULL
-            ''')
-            applications = cursor.fetchall()
-        
-        distribution = {'Low': 0, 'Medium': 0, 'High': 0, 'Very High': 0, 'Unknown': 0}
-        
-        for app_row in applications:
-            try:
-                score_data = json.loads(app_row[0])
-                risk_level = score_data.get('risk_level', 'Unknown')
-                distribution[risk_level] += 1
-            except:
-                distribution['Unknown'] += 1
-        
-        return distribution
+        if self.db is None:
+            print("Database connection is None, cannot get risk distribution")
+            return {'Low': 0, 'Medium': 0, 'High': 0, 'Very High': 0, 'Unknown': 0}
+            
+        try:
+            pipeline = [
+                {"$match": {
+                    "verification_status": "Verified",
+                    "score_result.risk_level": {"$exists": True}
+                }},
+                {"$group": {
+                    "_id": "$score_result.risk_level",
+                    "count": {"$sum": 1}
+                }}
+            ]
+            results = list(self.db.applications.aggregate(pipeline))
+            
+            distribution = {'Low': 0, 'Medium': 0, 'High': 0, 'Very High': 0, 'Unknown': 0}
+            for result in results:
+                distribution[result["_id"]] = result["count"]
+            
+            return distribution
+        except Exception as e:
+            print(f"Error getting risk distribution: {e}")
+            return {'Low': 0, 'Medium': 0, 'High': 0, 'Very High': 0, 'Unknown': 0}
+    
+    def update_application_score(self, app_id, score_result):
+        """Update application with score result"""
+        if self.db is None:
+            print("Database connection is None, cannot update application score")
+            return False
+            
+        try:
+            self.db.applications.update_one(
+                {"_id": ObjectId(app_id)},
+                {"$set": {"score_result": score_result}}
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating application score: {e}")
+            return False
 
 # Create a global database instance
 db = Database()
 
-# ==================== APPLICATION CLASS (KEEP THIS) ====================
+# ==================== APPLICATION CLASS ====================
 class Application:
     """Helper class to work with application data"""
     
@@ -413,69 +445,54 @@ class Application:
         self.verified_at = None
         self.verified_by = None
         self.files_path = None
-        self.file_verification_status = '{}'
+        self.file_verification_status = {}
+    
+    def get_score_dict(self):
+        """Safely get score_result whether it's a dict or not"""
+        if isinstance(self.score_result, dict):
+            return self.score_result
+        return {}
+    
+    def get_score_value(self):
+        """Get the scaled score value"""
+        return self.get_score_dict().get('scaled_score', 0)
+    
+    def get_risk_level(self):
+        """Get the risk level"""
+        return self.get_score_dict().get('risk_level', 'Not Scored')
+    
+    def get_breakdown_value(self, category):
+        """Get specific breakdown value from score result"""
+        score_dict = self.get_score_dict()
+        if not score_dict:
+            return 0
+        return score_dict.get('breakdown', {}).get(category, 0)
     
     @staticmethod
-    def from_db_row(row):
-        """Create an application object from database row"""
-        if not row:
+    def from_dict(data):
+        """Create an application object from MongoDB document"""
+        if not data:
             return None
         
         app = Application()
-        app.id = row['id']
-        app.user_id = row['user_id']
-        app.user_email = row['user_email']
-        app.verification_status = row['verification_status']
-        app.files_path = row['files_path']
-        
-        # Handle the new column that might not exist in older databases
-        try:
-            app.file_verification_status = row['file_verification_status']
-        except (IndexError, KeyError):
-            app.file_verification_status = '{}'  # Default value
-        
-        # Parse JSON data safely
-        try:
-            app.applicant_data = json.loads(row['applicant_data'])
-        except (json.JSONDecodeError, TypeError):
-            app.applicant_data = {}
-        
-        try:
-            app.admin_verified_data = json.loads(row['admin_verified_data']) if row['admin_verified_data'] else {}
-        except (json.JSONDecodeError, TypeError):
-            app.admin_verified_data = {}
-        
-        try:
-            app.score_result = json.loads(row['score_result']) if row['score_result'] else {}
-        except (json.JSONDecodeError, TypeError):
-            app.score_result = {}
-        
-        # Parse timestamps
-        try:
-            app.created_at = datetime.strptime(row['created_at'], '%Y-%m-%d %H:%M:%S')
-        except (ValueError, TypeError):
-            app.created_at = datetime.now()
-        
-        try:
-            if row['verified_at']:
-                app.verified_at = datetime.strptime(row['verified_at'], '%Y-%m-%d %H:%M:%S')
-        except (ValueError, TypeError):
-            app.verified_at = None
-        
-        app.verified_by = row['verified_by']
+        app.id = str(data.get("_id", ""))
+        app.user_id = data.get("user_id", "")
+        app.user_email = data.get("user_email", "")
+        app.verification_status = data.get("verification_status", "Pending")
+        app.files_path = data.get("files_path", {})
+        app.file_verification_status = data.get("file_verification_status", {})
+        app.applicant_data = data.get("applicant_data", {})
+        app.admin_verified_data = data.get("admin_verified_data", {})
+        app.score_result = data.get("score_result", {})
+        app.created_at = data.get("created_at")
+        app.verified_at = data.get("verified_at")
+        app.verified_by = data.get("verified_by")
         
         return app
     
     def get_file_verification_status(self):
         """Get file verification status"""
-        try:
-            return json.loads(self.file_verification_status)
-        except (json.JSONDecodeError, TypeError):
-            return {
-                'employment_proof': 'Pending',
-                'airtime_proof': 'Pending', 
-                'bank_statement': 'Pending'
-            }
+        return self.file_verification_status
     
     def all_files_verified(self):
         """Check if all files are verified"""
@@ -486,20 +503,6 @@ class Application:
         """Check if any files are rejected"""
         status = self.get_file_verification_status()
         return any(s == 'Rejected' for s in status.values())
-    
-    def get_score_value(self):
-        """Get the scaled score value"""
-        return self.score_result.get('scaled_score', 0)
-    
-    def get_risk_level(self):
-        """Get the risk level"""
-        return self.score_result.get('risk_level', 'Not Scored')
-    
-    def get_breakdown_value(self, category):
-        """Get specific breakdown value from score result"""
-        if not self.score_result:
-            return 0
-        return self.score_result.get('breakdown', {}).get(category, 0)
     
     def get_verification_status_badge(self):
         """Get Bootstrap badge class based on verification status"""
@@ -539,39 +542,9 @@ class Application:
     
     def get_formatted_date(self):
         """Get formatted creation date"""
-        return self.created_at.strftime('%Y-%m-%d %H:%M')
+        if self.created_at:
+            return self.created_at.strftime('%Y-%m-%d %H:%M')
+        return "Unknown"
     
     def __repr__(self):
         return f'<Application {self.id} - {self.user_email} - Score: {self.get_score_value()}>'
-
-        # Test the database initialization
-        # Test the database initialization
-if __name__ == '__main__':
-    print("Testing database initialization...")
-    test_db = Database('test.db')
-    print("Database created successfully!")
-    
-    # Test user operations
-    test_hash = bcrypt.hashpw("test123".encode(), bcrypt.gensalt()).decode()
-    success = test_db.add_user("test-user", "test@example.com", test_hash, False)
-    print(f"User added: {success}")
-    
-    # Test password verification
-    result = test_db.verify_user_password("test@example.com", "test123")
-    print(f"Password verification test: {result}")
-    
-    # Test wrong password
-    wrong_result = test_db.verify_user_password("test@example.com", "wrongpassword")
-    print(f"Wrong password test: {wrong_result}")
-    
-    # Close database connection properly before deleting
-    del test_db  # This releases the file lock
-    
-    # Clean up
-    import os
-    import time
-    time.sleep(0.1)  # Give time for file lock to release
-    if os.path.exists('test.db'):
-        os.remove('test.db')
-        print("Test file cleaned up!")
-    print("✅ All tests completed successfully!")
