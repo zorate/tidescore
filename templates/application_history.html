@@ -9,37 +9,134 @@
 {% if applications %}
     <div class="row">
         {% for app in applications %}
-        <div class="col-md-6 mb-3">
-            <div class="card">
-                <div class="card-header">
-                    <h6>Application #{{ app.id }}</h6>
-                    <small>{{ app.get_formatted_date() }}</small>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Application #{{ app.id }}</h6>
+                        <small class="text-muted">{{ app.get_formatted_date() }}</small>
+                    </div>
+                    <span class="badge {{ app.get_verification_status_badge() }}">
+                        {{ app.verification_status }}
+                    </span>
                 </div>
                 <div class="card-body">
-                    <div class="text-center">
-                        <h3 class="{{ app.get_score_color_class() }}">
+                    <!-- Score Display -->
+                    <div class="text-center mb-3">
+                        <h3 class="{{ app.get_score_color_class() }} mb-1">
                             {{ app.get_score_value() }}/850
                         </h3>
-                        <p class="badge {{ app.get_risk_badge_class() }}">
+                        <span class="badge {{ app.get_risk_badge_class() }} fs-6">
                             {{ app.get_risk_level() }} Risk
-                        </p>
+                        </span>
                     </div>
+
+                    <!-- Score Breakdown -->
+                    {% if app.score_result and app.score_result.breakdown %}
+                    <div class="mb-3">
+                        <h6 class="border-bottom pb-2">Score Breakdown:</h6>
+                        {% set breakdown = app.score_result.breakdown %}
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <small class="text-muted">Personal & Employment</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success personal-progress" 
+                                         data-score="{{ breakdown.get('Personal & Employment', 0) }}"
+                                         data-max="50"></div>
+                                </div>
+                                <small>{{ breakdown.get('Personal & Employment', 0) }}/50</small>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted">Airtime & Data</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-info airtime-progress" 
+                                         data-score="{{ breakdown.get('Airtime & Data', 0) }}"
+                                         data-max="120"></div>
+                                </div>
+                                <small>{{ breakdown.get('Airtime & Data', 0) }}/120</small>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted">Bill Payments</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning bill-progress" 
+                                         data-score="{{ breakdown.get('Bill Payments', 0) }}"
+                                         data-max="170"></div>
+                                </div>
+                                <small>{{ breakdown.get('Bill Payments', 0) }}/170</small>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted">Bank Activity</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary bank-progress" 
+                                         data-score="{{ breakdown.get('Bank Activity', 0) }}"
+                                         data-max="200"></div>
+                                </div>
+                                <small>{{ breakdown.get('Bank Activity', 0) }}/200</small>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted">Guarantors</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-secondary guarantor-progress" 
+                                         data-score="{{ breakdown.get('Guarantors', 0) }}"
+                                         data-max="90"></div>
+                                </div>
+                                <small>{{ breakdown.get('Guarantors', 0) }}/90</small>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted">Total Score</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-dark total-progress" 
+                                         data-score="{{ app.get_score_value() }}"
+                                         data-max="850"></div>
+                                </div>
+                                <small>{{ app.get_score_value() }}/850</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Suggestions -->
+                    {% if app.score_result and app.score_result.suggestions %}
+                    <div class="mb-3">
+                        <h6 class="border-bottom pb-2">Suggestions for Improvement:</h6>
+                        <div class="suggestions-container" style="max-height: 120px; overflow-y: auto;">
+                            <ul class="list-unstyled mb-0">
+                                {% for suggestion in app.score_result.suggestions %}
+                                <li class="mb-1">
+                                    <small class="text-muted">• {{ suggestion }}</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- File Status -->
+                    {% if app.files_path %}
                     <div class="mt-3">
-                        <small class="text-muted">Breakdown:</small>
-                        <!-- Fixed: Use data attributes instead of inline styles with percentages -->
-                        <div class="progress mt-1" style="height: 8px;">
-                            <div class="progress-bar bg-success" 
-                                 data-width="{{ (app.get_breakdown_value('Personal & Employment')/100)*100 }}"></div>
-                            <div class="progress-bar bg-info" 
-                                 data-width="{{ (app.get_breakdown_value('Airtime & Data')/100)*100 }}"></div>
-                            <div class="progress-bar bg-warning" 
-                                 data-width="{{ (app.get_breakdown_value('Bill Payments')/100)*100 }}"></div>
+                        <h6 class="border-bottom pb-2">Uploaded Documents:</h6>
+                        <div class="row">
+                            {% for file_type, file_info in app.files_path.items() %}
+                            <div class="col-6 mb-1">
+                                <small class="d-block">
+                                    <i class="fas fa-file me-1"></i>
+                                    {{ file_type|replace('_', ' ')|title }}
+                                </small>
+                                <span class="badge bg-{% if file_info.verified %}success{% else %}secondary{% endif %} fs-3">
+                                    {% if file_info.verified %}Verified{% else %}Pending{% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <div class="small text-muted mt-1">
-                            Personal: {{ app.get_breakdown_value('Personal & Employment') }} | 
-                            Airtime: {{ app.get_breakdown_value('Airtime & Data') }} | 
-                            Bills: {{ app.get_breakdown_value('Bill Payments') }}
-                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Status: {{ app.verification_status }}</small>
+                        {% if app.verified_by %}
+                        <small class="text-muted">Verified by: {{ app.verified_by }}</small>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -54,28 +151,56 @@
     </div>
 {% endif %}
 
+<!-- Score Guide -->
 <div class="mt-4">
     <div class="card">
         <div class="card-header">
-            <h6>What do the scores mean?</h6>
+            <h6>Understanding Your TideScore</h6>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-3 text-center">
-                    <span class="badge bg-success">650-850</span>
-                    <p class="small mb-0">Low Risk</p>
+                <div class="col-md-3 text-center mb-3">
+                    <span class="badge bg-success fs-6">650-850</span>
+                    <p class="small mb-0 mt-1">Low Risk<br>Excellent creditworthiness</p>
                 </div>
-                <div class="col-md-3 text-center">
-                    <span class="badge bg-warning">450-649</span>
-                    <p class="small mb-0">Medium Risk</p>
+                <div class="col-md-3 text-center mb-3">
+                    <span class="badge bg-warning fs-6">450-649</span>
+                    <p class="small mb-0 mt-1">Medium Risk<br>Good, with room for improvement</p>
                 </div>
-                <div class="col-md-3 text-center">
-                    <span class="badge bg-danger">250-449</span>
-                    <p class="small mb-0">High Risk</p>
+                <div class="col-md-3 text-center mb-3">
+                    <span class="badge bg-danger fs-6">250-449</span>
+                    <p class="small mb-0 mt-1">High Risk<br>Needs significant improvement</p>
                 </div>
-                <div class="col-md-3 text-center">
-                    <span class="badge bg-dark">0-249</span>
-                    <p class="small mb-0">Very High Risk</p>
+                <div class="col-md-3 text-center mb-3">
+                    <span class="badge bg-dark fs-6">0-249</span>
+                    <p class="small mb-0 mt-1">Very High Risk<br>Immediate action needed</p>
+                </div>
+            </div>
+            
+            <!-- Category Information -->
+            <div class="mt-3">
+                <h6>Score Categories:</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <span class="badge bg-success">Personal & Employment</span>
+                        <p class="small mb-1">Education, employment status, residency verification</p>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="badge bg-info">Airtime & Data</span>
+                        <p class="small mb-1">Consistency and amount of airtime spending</p>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="badge bg-warning">Bill Payments</span>
+                        <p class="small mb-1">Utility bills, subscriptions, regular payments</p>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="badge bg-primary">Bank Activity</span>
+                        <p class="small mb-1">Account balance, transaction consistency</p>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="badge bg-secondary">Guarantors</span>
+                        <p class="small mb-1">Quality and verification of guarantors</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -88,9 +213,47 @@
 $(document).ready(function() {
     // Set progress bar widths from data attributes
     $('.progress-bar').each(function() {
-        const width = $(this).data('width');
+        const score = parseFloat($(this).data('score')) || 0;
+        const max = parseFloat($(this).data('max')) || 100;
+        const width = Math.min((score / max) * 100, 100);
         $(this).css('width', width + '%');
+    });
+
+    // Smooth scrolling for suggestions
+    $('.suggestions-container').hover(function() {
+        $(this).css('overflow-y', 'auto');
+    }, function() {
+        $(this).css('overflow-y', 'hidden');
     });
 });
 </script>
+
+<style>
+.progress {
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-bar {
+    transition: width 0.6s ease;
+}
+.suggestions-container {
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d transparent;
+}
+.suggestions-container::-webkit-scrollbar {
+    width: 4px;
+}
+.suggestions-container::-webkit-scrollbar-thumb {
+    background-color: #6c757d;
+    border-radius: 2px;
+}
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
 {% endblock %}

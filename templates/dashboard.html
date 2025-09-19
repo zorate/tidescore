@@ -11,6 +11,36 @@
     <p class="mb-0">Ready to check your creditworthiness? Create a new application or view your history below.</p>
 </div>
 
+<!-- Storage Usage Card - ADDED -->
+{% if storage_info %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Storage Usage</h6>
+                <a href="{{ url_for('storage_info') }}" class="btn btn-sm btn-outline-primary">Details</a>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-2" style="height: 20px;">
+                    <div class="progress-bar storage-progress-dashboard" 
+                         data-percent="{{ (storage_info.used/storage_info.limit)*100 }}"
+                         data-used="{{ storage_info.used }}"
+                         data-limit="{{ storage_info.limit }}">
+                    </div>
+                </div>
+                <small class="text-muted">
+                    {{ (storage_info.used/(1024*1024))|round(2) }} MB of 
+                    {{ (storage_info.limit/(1024*1024))|round(2) }} MB used
+                    {% if storage_info.available <= 0 %}
+                    <span class="text-danger"> - Storage full!</span>
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row">
     <!-- Quick Actions Card -->
     <div class="col-md-6 mb-4">
@@ -25,6 +55,9 @@
                     </a>
                     <a href="{{ url_for('my_applications') }}" class="btn btn-outline-secondary">
                         📋 View Application History
+                    </a>
+                    <a href="{{ url_for('storage_info') }}" class="btn btn-outline-info">
+                        💾 Storage Information
                     </a>
                 </div>
             </div>
@@ -59,6 +92,7 @@
             <div class="card-body">
                 <ol class="ps-3">
                     <li class="mb-2">Complete the application form with your financial information</li>
+                    <li class="mb-2">Upload supporting documents (max 5MB each)</li>
                     <li class="mb-2">Our algorithm analyzes multiple data points</li>
                     <li class="mb-2">Get instant credit score (0-850 scale)</li>
                     <li class="mb-2">Receive your risk assessment</li>
@@ -98,6 +132,21 @@
     </div>
 </div>
 
+<!-- Storage Policy Card - ADDED -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">Storage Policy</h6>
+    </div>
+    <div class="card-body">
+        <ul class="mb-0 small">
+            <li>Maximum 5MB per file</li>
+            <li>Maximum 30MB total storage per user</li>
+            <li>Supported formats: PDF, PNG, JPG, JPEG, DOC, DOCX</li>
+            <li>Oldest files are automatically deleted when limit is exceeded</li>
+        </ul>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-header bg-light">
         <h6 class="mb-0">Need Help?</h6>
@@ -106,4 +155,40 @@
         <p class="small mb-0">If you have questions about your score or need assistance with the application, our support team is here to help.</p>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Set progress bar width and color based on usage percentage for dashboard
+    $('.storage-progress-dashboard').each(function() {
+        const percent = parseFloat($(this).data('percent')) || 0;
+        const used = parseFloat($(this).data('used')) || 0;
+        const limit = parseFloat($(this).data('limit')) || 30 * 1024 * 1024;
+        
+        // Set width
+        $(this).css('width', percent + '%');
+        
+        // Set color based on usage
+        if (percent > 90) {
+            $(this).addClass('bg-danger');
+        } else if (percent > 70) {
+            $(this).addClass('bg-warning');
+        } else {
+            $(this).addClass('bg-success');
+        }
+    });
+});
+</script>
+
+<style>
+.storage-progress-dashboard {
+    transition: width 0.6s ease;
+}
+.progress {
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+</style>
 {% endblock %}

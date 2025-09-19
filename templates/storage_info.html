@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Your Storage Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Storage Usage</h5>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar storage-progress" 
+                             data-percent="{{ storage_info.usage_percent }}"
+                             data-used="{{ storage_info.used_mb }}"
+                             data-limit="{{ storage_info.limit_mb }}">
+                            {{ storage_info.usage_percent }}%
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <strong>{{ storage_info.used_mb }} MB</strong> used of 
+                        <strong>{{ storage_info.limit_mb }} MB</strong> total
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6>Storage Policy</h6>
+                    <ul class="mb-0">
+                        <li>Maximum 5MB per file</li>
+                        <li>Maximum 30MB total storage per user</li>
+                        <li>Supported formats: PDF, PNG, JPG, JPEG, DOC, DOCX</li>
+                        <li>Oldest files are automatically deleted when limit is exceeded</li>
+                    </ul>
+                </div>
+                
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Set progress bar color and width based on usage percentage
+    $('.storage-progress').each(function() {
+        const percent = parseFloat($(this).data('percent')) || 0;
+        const used = parseFloat($(this).data('used')) || 0;
+        const limit = parseFloat($(this).data('limit')) || 30;
+        
+        // Set width
+        $(this).css('width', percent + '%');
+        
+        // Set color based on usage
+        if (percent > 90) {
+            $(this).addClass('bg-danger');
+        } else if (percent > 70) {
+            $(this).addClass('bg-warning');
+        } else {
+            $(this).addClass('bg-success');
+        }
+    });
+});
+</script>
+
+<style>
+.progress {
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-bar {
+    transition: width 0.6s ease;
+}
+.storage-progress {
+    /* Default color, will be overridden by JavaScript */
+    background-color: #28a745;
+}
+</style>
+{% endblock %}

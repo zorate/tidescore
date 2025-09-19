@@ -36,9 +36,7 @@
                     <h6 class="mb-0"><i class="fas fa-file"></i> Uploaded Documents</h6>
                 </div>
                 <div class="card-body">
-                    {% set files = application.files_path|from_json %}
-                    
-                    {% if files.employment_proof %}
+                    {% if application.files_path.employment_proof %}
                     <div class="mb-3">
                         <h6>Employment Proof</h6>
                         <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='employment_proof') }}" target="_blank" 
@@ -48,7 +46,7 @@
                     </div>
                     {% endif %}
                     
-                    {% if files.airtime_proof %}
+                    {% if application.files_path.airtime_proof %}
                     <div class="mb-3">
                         <h6>Airtime Proof</h6>
                         <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='airtime_proof') }}" target="_blank" 
@@ -58,7 +56,7 @@
                     </div>
                     {% endif %}
                     
-                    {% if files.bank_statement %}
+                    {% if application.files_path.bank_statement %}
                     <div class="mb-3">
                         <h6>Bank Statement</h6>
                         <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='bank_statement') }}" target="_blank" 
@@ -68,7 +66,7 @@
                     </div>
                     {% endif %}
                     
-                    {% if not files.employment_proof and not files.airtime_proof and not files.bank_statement %}
+                    {% if not application.files_path.employment_proof and not application.files_path.airtime_proof and not application.files_path.bank_statement %}
                     <p class="text-muted text-center">No documents uploaded</p>
                     {% endif %}
                 </div>
@@ -112,7 +110,6 @@
                 <div class="card-body">
                     <div class="row">
                         {% set file_status = application.get_file_verification_status() %}
-                        {% set files = application.files_path|from_json if application.files_path else {} %}
                         
                         <!-- Employment Proof Verification -->
                         <div class="col-md-4 mb-3">
@@ -124,7 +121,7 @@
                                     </span>
                                 </div>
                                 <div class="card-body">
-                                    {% if files.employment_proof %}
+                                    {% if application.files_path and application.files_path.employment_proof %}
                                     <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='employment_proof') }}" 
                                        target="_blank" class="btn btn-sm btn-outline-primary w-100 mb-2">
                                         <i class="fas fa-eye"></i> View Document
@@ -154,7 +151,7 @@
                                     </span>
                                 </div>
                                 <div class="card-body">
-                                    {% if files.airtime_proof %}
+                                    {% if application.files_path and application.files_path.airtime_proof %}
                                     <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='airtime_proof') }}" 
                                        target="_blank" class="btn btn-sm btn-outline-success w-100 mb-2">
                                         <i class="fas fa-eye"></i> View Document
@@ -184,7 +181,7 @@
                                     </span>
                                 </div>
                                 <div class="card-body">
-                                    {% if files.bank_statement %}
+                                    {% if application.files_path and application.files_path.bank_statement %}
                                     <a href="{{ url_for('admin_view_document', app_id=application.id, document_type='bank_statement') }}" 
                                        target="_blank" class="btn btn-sm btn-outline-warning w-100 mb-2">
                                         <i class="fas fa-eye"></i> View Document
@@ -209,8 +206,6 @@
         </div>
     </div>
 
-    <!-- ===== NEW VERIFICATION SECTIONS ===== -->
-    
     <!-- Education Verification -->
     <div class="row mt-4">
         <div class="col-md-6">

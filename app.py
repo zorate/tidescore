@@ -10,6 +10,10 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = Config.SECRET_KEY
 
+# === FILE STORAGE CONSTANTS ===
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB per file
+MAX_TOTAL_SIZE = 30 * 1024 * 1024  # 30MB total per user
+
 # === SECURITY HEADERS ===
 @app.after_request
 def add_security_headers(response):
@@ -42,7 +46,51 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# === STORAGE MANAGEMENT FUNCTIONS ===
+def cleanup_user_files(user_id):
+    """Clean up old files when user exceeds storage limit"""
+    try:
+        user = db.get_user_by_id(user_id)
+        if not user or user.get('total_storage_used', 0) <= MAX_TOTAL_SIZE:
+            return True
+            
+        # Get user's files sorted by upload date (oldest first)
+        files = user.get('files', [])
+        files.sort(key=lambda x: x.get('uploaded_at', datetime.min))
+        
+        # Delete oldest files until under limit
+        total_used = user.get('total_storage_used', 0)
+        for file_info in files:
+            if total_used <= MAX_TOTAL_SIZE:
+                break
+                
+            # Delete physical file
+            file_path = os.path.join('uploads', file_info['filename'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Cleaned up file: {file_info['filename']}")
+                
+            # Update storage count
+            total_used -= file_info['size']
+            db.update_user_storage(user_id, file_info['size'], 'remove')
+            
+            # Remove from user's file list
+            db.db.users.update_one(
+                {"_id": user_id},
+                {"$pull": {"files": {"filename": file_info['filename']}}}
+            )
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error cleaning up user files: {e}")
+        return False
+
 # === ROUTES ===
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+
 @app.route('/')
 def home():
     if 'user' in session:
@@ -56,12 +104,42 @@ def home():
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
-    return render_template('dashboard.html', user_email=session['user']['email'])
+    
+    # Get storage info for dashboard
+    storage_info = db.get_user_storage_info(session['user']['id'])
+    return render_template('dashboard.html', 
+                         user_email=session['user']['email'],
+                         storage_info=storage_info)
+
+@app.route('/storage-info')
+def storage_info():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    storage_info = db.get_user_storage_info(session['user']['id'])
+    if not storage_info:
+        flash('Could not retrieve storage information', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Convert bytes to MB for display
+    storage_info['used_mb'] = round(storage_info['used'] / (1024 * 1024), 2)
+    storage_info['limit_mb'] = round(storage_info['limit'] / (1024 * 1024), 2)
+    storage_info['available_mb'] = round(storage_info['available'] / (1024 * 1024), 2)
+    storage_info['usage_percent'] = round((storage_info['used'] / storage_info['limit']) * 100, 2)
+    
+    return render_template('storage_info.html', storage_info=storage_info)
 
 @app.route('/new_application')
 def new_application():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
+    
+    # Check storage before allowing new application
+    storage_info = db.get_user_storage_info(session['user']['id'])
+    if storage_info and storage_info['available'] <= 0:
+        flash('You have reached your storage limit (30MB). Please delete some files before uploading new ones.', 'error')
+        return redirect(url_for('storage_info'))
+        
     return render_template('applications.html')
 
 @app.route('/submit_application', methods=['POST'])
@@ -99,10 +177,27 @@ def submit_application():
         }
 
         files_uploaded = {}
+        total_size = 0
+
         for file_type in ['employment_proof', 'airtime_proof', 'bank_statement']:
             if file_type in request.files:
                 file = request.files[file_type]
                 if file and file.filename:
+                    # Check file size
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    file.seek(0)  # Reset file pointer
+                    
+                    if file_size > MAX_FILE_SIZE:
+                        flash(f'{file_type.replace("_", " ").title()} exceeds 5MB limit', 'error')
+                        continue
+                    
+                    # Check user's available storage
+                    storage_info = db.get_user_storage_info(session['user']['id'])
+                    if storage_info and (storage_info['used'] + file_size) > MAX_TOTAL_SIZE:
+                        flash('Total file storage limit (30MB) exceeded', 'error')
+                        continue
+                    
                     allowed_extensions = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx']
                     file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
                     
@@ -114,8 +209,13 @@ def submit_application():
                             file_path = os.path.join(upload_dir, unique_filename)
                             file.save(file_path)
                             
+                            total_size += file_size
+                            
                             files_uploaded[file_type] = {
-                                'path': unique_filename,
+                                'filename': unique_filename,
+                                'original_name': file.filename,
+                                'size': file_size,
+                                'uploaded_at': datetime.utcnow().isoformat(),
                                 'verified': False,
                                 'verification_notes': '',
                                 'verified_by': '',
@@ -128,6 +228,25 @@ def submit_application():
                     else:
                         flash(f'Invalid file type for {file_type}. Allowed: PDF, PNG, JPG, JPEG, DOC, DOCX', 'error')
 
+        # Update user storage if files were uploaded
+        if total_size > 0:
+            db.update_user_storage(session['user']['id'], total_size, 'add')
+            
+            # Add files to user's file list
+            for file_type, file_info in files_uploaded.items():
+                db.db.users.update_one(
+                    {"_id": session['user']['id']},
+                    {"$push": {
+                        "files": {
+                            "filename": file_info['filename'],
+                            "type": file_type,
+                            "size": file_info['size'],
+                            "uploaded_at": datetime.utcnow(),
+                            "application_id": None  # Will be updated after app creation
+                        }
+                    }}
+                )
+
         app_id = db.add_application(
             session['user']['id'],
             session['user']['email'],
@@ -135,7 +254,19 @@ def submit_application():
             files_uploaded if files_uploaded else None
         )
 
+        # Update application ID in user's file records
+        if app_id and files_uploaded:
+            for file_type, file_info in files_uploaded.items():
+                db.db.users.update_one(
+                    {"_id": session['user']['id'], "files.filename": file_info['filename']},
+                    {"$set": {"files.$.application_id": app_id}}
+                )
+
         session['last_application_id'] = app_id
+        
+        # Clean up if over limit
+        cleanup_user_files(session['user']['id'])
+        
         return jsonify({
             'success': True,
             'message': 'Application submitted successfully! It will be reviewed by our team.',
@@ -149,6 +280,25 @@ def submit_application():
 @app.route('/uploads/<filename>')
 def serve_uploaded_file(filename):
     return send_from_directory('uploads', filename)
+
+@app.route('/debug-application/<app_id>')
+def debug_application(app_id):
+    """Debug route to check application data"""
+    application = db.get_application_by_id(app_id)
+    if not application:
+        return "Application not found"
+    
+    result = f"<h2>Application {application.id}</h2>"
+    result += f"<p>User: {application.user_email}</p>"
+    result += f"<p>Files: {application.files_path}</p>"
+    result += f"<p>Score Result: {application.score_result}</p>"
+    
+    if application.files_path:
+        result += "<h3>Uploaded Files:</h3>"
+        for file_type, file_info in application.files_path.items():
+            result += f"<p><strong>{file_type}:</strong> {file_info.get('filename', 'No filename')}</p>"
+    
+    return result
 
 @app.route('/calculate_score', methods=['POST'])
 def calculate_score():
@@ -314,8 +464,8 @@ def admin_view_document(app_id, document_type):
         if document_type not in files_data or not files_data[document_type]:
             abort(404)
         
-        if isinstance(files_data[document_type], dict) and 'path' in files_data[document_type]:
-            file_path = files_data[document_type]['path']
+        if isinstance(files_data[document_type], dict) and 'filename' in files_data[document_type]:
+            file_path = files_data[document_type]['filename']
             absolute_path = os.path.join('uploads', file_path)
             
             if not os.path.exists(absolute_path):

@@ -1,66 +1,148 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="card-title text-center mb-0">
-                    <i class="fas fa-wave"></i> Welcome to TideScore
-                </h4>
-                <p class="text-center mb-0 mt-1">Login or create your account</p>
-            </div>
-            <div class="card-body p-4">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else 'info' }} alert-dismissible fade show">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <form method="POST" action="{{ url_for('auth.login') }}" id="authForm">
-                    <!-- EMAIL FIELD -->
-                    <div class="mb-3">
-                        <label for="email" class="form-label">
-                            <i class="fas fa-envelope"></i> Email Address
-                        </label>
-                        <input type="email" class="form-control form-control-lg" id="email" name="email" required 
-                               placeholder="your.email@example.com" value="{{ email if email }}"
-                               autocomplete="email">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <!-- Left Column - Service Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Welcome to TideScore</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-chart-line fa-4x text-primary mb-3"></i>
+                        <h3>Modern Alternative Credit Scoring</h3>
                     </div>
                     
-                    <!-- PASSWORD FIELD - 100% VISIBLE -->
-                    <div class="mb-3">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock"></i> Password
-                        </label>
-                        <input type="password" class="form-control form-control-lg" id="password" name="password" 
-                               placeholder="Enter your password" required>
-                        <div class="form-text">
-                            <i class="fas fa-shield-alt"></i> Enter your password to login or sign up
+                    <div class="features-list">
+                        <div class="feature-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon me-3">
+                                    <i class="fas fa-bolt text-success fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Instant Credit Scoring</h5>
+                                    <p class="text-muted mb-0">Get your credit score in minutes, not days</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon me-3">
+                                    <i class="fas fa-mobile-alt text-info fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Digital-First Approach</h5>
+                                    <p class="text-muted mb-0">Use your digital footprint for better scoring</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon me-3">
+                                    <i class="fas fa-shield-alt text-warning fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Secure & Private</h5>
+                                    <p class="text-muted mb-0">Bank-level security for your data</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="feature-icon me-3">
+                                    <i class="fas fa-tachometer-alt text-danger fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>0-850 Score Range</h5>
+                                    <p class="text-muted mb-0">Comprehensive risk assessment</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" name="action" value="login" 
-                                class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </button>
-                        <button type="submit" name="action" value="signup" 
-                                class="btn btn-primary btn-lg">
-                            <i class="fas fa-user-plus"></i> Sign Up
-                        </button>
+                    
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6>How It Works:</h6>
+                        <ol class="small">
+                            <li>Create your account</li>
+                            <li>Complete the application</li>
+                            <li>Upload supporting documents</li>
+                            <li>Get your instant credit score</li>
+                            <li>Track your financial health</li>
+                        </ol>
                     </div>
-                </form>
+                </div>
+            </div>
+        </div>
 
-                <div class="text-center mt-4">
-                    <p class="text-muted mb-0">
-                        <i class="fas fa-key"></i> Secure password authentication
-                    </p>
+        <!-- Right Column - Login Form -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Sign In to Your Account</h4>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('auth.login') }}" id="authForm">
+                        <!-- EMAIL FIELD -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required 
+                                   placeholder="your.email@example.com" value="{{ email if email }}"
+                                   autocomplete="email">
+                        </div>
+                        
+                        <!-- PASSWORD FIELD WITH TOGGLE -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> Password
+                            </label>
+                            <div class="password-toggle position-relative">
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="Enter your password" required>
+                                <button type="button" class="toggle-password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-shield-alt"></i> Your password is secure and encrypted
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="login" 
+                                    class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                            <button type="submit" name="action" value="signup" 
+                                    class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> Sign Up
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- FORGOT PASSWORD LINK -->
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none">
+                            <i class="fas fa-key"></i> Forgot your password?
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
