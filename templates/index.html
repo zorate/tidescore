@@ -1,14 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="card-title text-center mb-0">
-                    <i class="fas fa-wave"></i> Welcome to TideScore
+<!-- Hero Section -->
+<div class="row justify-content-center mb-5">
+    <div class="col-md-10">
+        <div class="hero-score-container text-center">
+            <h1 class="hero-score">TideScore</h1>
+            <p class="hero-score-label">Your Consistency. Your Worth. Proven.</p>
+            <p class="lead">The alternative credit score that recognizes every Nigerian's financial journey - from market traders to freelancers.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Login Form Column -->
+    <div class="col-md-5">
+        <div class="card shadow sticky-top" style="top: 20px;">
+            <div class="card-header text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-wave me-2"></i> Welcome to TideScore
                 </h4>
-                <p class="text-center mb-0 mt-1">Login or create your account</p>
+                <p class="mb-0 mt-1">Login or create your account</p>
             </div>
             <div class="card-body p-4">
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -32,15 +44,20 @@
                                autocomplete="email">
                     </div>
                     
-                    <!-- PASSWORD FIELD - ALWAYS VISIBLE -->
+                    <!-- PASSWORD FIELD WITH VISIBILITY TOGGLE -->
                     <div class="mb-3">
                         <label for="password" class="form-label">
                             <i class="fas fa-lock"></i> Password
                         </label>
-                        <input type="password" class="form-control form-control-lg" id="password" name="password" 
-                               placeholder="Enter your password" required>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                                   placeholder="Enter your password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         <div class="form-text">
-                            <i class="fas fa-shield-alt"></i> Enter your password to login or sign up
+                            <i class="fas fa-shield-alt"></i> Secure password authentication
                         </div>
                     </div>
 
@@ -51,72 +68,262 @@
                         </button>
                         <button type="submit" name="action" value="signup" 
                                 class="btn btn-primary btn-lg">
-                            <i class="fas fa-user-plus"></i> Sign Up
+                            <i class="fas fa-user-plus"></i> Create Account
                         </button>
                     </div>
                 </form>
 
                 <div class="text-center mt-4">
                     <p class="text-muted mb-0">
-                        <i class="fas fa-key"></i> Secure password authentication
+                        <i class="fas fa-key"></i> Your financial data is encrypted and secure
                     </p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Information Card -->
-        <div class="card mt-4 shadow">
+    <!-- Information Column -->
+    <div class="col-md-7">
+        <!-- About Us Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> About TideScore</h5>
+            </div>
             <div class="card-body">
-                <h6 class="card-title text-primary">
-                    <i class="fas fa-info-circle"></i> About TideScore
-                </h6>
-                <div class="row">
-                    <div class="col-12">
-                        <p class="card-text small mb-1">
-                            <i class="fas fa-user-plus text-success"></i> 
-                            <strong>New Users:</strong> Sign up with email and password
-                        </p>
-                        <p class="card-text small mb-1">
-                            <i class="fas fa-sign-in-alt text-primary"></i> 
-                            <strong>Returning Users:</strong> Login with your credentials
-                        </p>
-                        <p class="card-text small mb-0">
-                            <i class="fas fa-lock text-warning"></i> 
-                            <strong>Secure:</strong> Your data is protected
-                        </p>
+                <p>TideScore is revolutionizing financial inclusion in Nigeria by creating alternative credit scores that recognize the real financial behavior of everyday Nigerians.</p>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary rounded-circle p-2 me-3">
+                                <i class="fas fa-users text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">For Everyone</h6>
+                                <small class="text-muted">Market traders, freelancers, students</small>
+                            </div>
+                        </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success rounded-circle p-2 me-3">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Real Recognition</h6>
+                                <small class="text-muted">Your consistency builds your score</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> How It Works</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <span class="badge bg-primary me-3">1</span>
+                            <div>
+                                <h6>Create Account</h6>
+                                <p class="small mb-0">Sign up with your email and secure password</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <span class="badge bg-success me-3">2</span>
+                            <div>
+                                <h6>Submit Information</h6>
+                                <p class="small mb-0">Share your financial patterns and upload documents</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <span class="badge bg-warning me-3">3</span>
+                            <div>
+                                <h6>Get Your Score</h6>
+                                <p class="small mb-0">Receive your TideScore (0-850 scale)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <span class="badge bg-info me-3">4</span>
+                            <div>
+                                <h6>Access Opportunities</h6>
+                                <p class="small mb-0">Use your score for loans and financial services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i> Frequently Asked Questions</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="faqAccordion">
+                    <!-- FAQ Item 1 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                What makes TideScore different from traditional credit scores?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                TideScore uses alternative data like airtime purchases, utility bills, and banking patterns instead of requiring previous loan history. We believe your daily financial behavior tells your story better than traditional metrics.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 2 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Is my financial data secure?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Absolutely. We use bank-level encryption and never share your personal information without your consent. Your privacy is our top priority.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 3 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                How long does it take to get my score?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Once you complete your application and upload required documents, you'll receive your TideScore within 24-48 hours after verification.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 4 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                What if I don't have bank statements?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                No problem! We use multiple data points. Your airtime usage, utility payments, and other financial patterns can still build a strong score.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Item 5 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                Is TideScore completely free?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes! Creating your TideScore is completely free. We believe everyone deserves access to financial recognition regardless of their economic background.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-comment-dots me-2"></i> We Value Your Feedback</h5>
+            </div>
+            <div class="card-body">
+                <p>Your experience helps us improve. Share your thoughts, questions, or suggestions with us.</p>
+                <div class="text-center">
+                    <a href="https://forms.gle/34812xSmGow6Zx6aA" 
+                       target="_blank" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-pencil-alt me-2"></i>Share Your Feedback
+                    </a>
+                </div>
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-envelope me-1"></i>
+                        Or email us directly: support@tidescore.com
+                    </small>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.card {
-    border: none;
-    border-radius: 15px;
-}
-.card-header {
-    border-radius: 15px 15px 0 0 !important;
-}
-.btn {
-    border-radius: 10px;
-}
-.form-control {
-    border-radius: 10px;
-    border: 2px solid #e9ecef;
-}
-.form-control:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-</style>
+<!-- Mission Statement -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light border-0">
+            <div class="card-body text-center py-4">
+                <h3 class="text-dark mb-3">Our Mission: Financial Inclusion for All Nigerians</h3>
+                <p class="lead text-muted mb-4">
+                    We're bridging the 24 trillion Naira credit gap by proving that consistency matters more than collateral. 
+                    Whether you're a market trader in Kano or a freelancer in Lagos, your financial worth deserves recognition.
+                </p>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-primary rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-bullseye text-white fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">Our Goal</h6>
+                        <p class="small text-muted">Democratize access to credit scoring</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-success rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-hand-holding-heart text-white fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">Our Service</h6>
+                        <p class="small text-muted">Alternative credit scoring for all</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-warning rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-users text-white fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">Our Community</h6>
+                        <p class="small text-muted">10,000+ Nigerians already building their scores</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const authForm = document.getElementById('authForm');
+    const togglePassword = document.getElementById('togglePassword');
+    
+    // Password visibility toggle
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+    });
 
     // Form submission validation
     authForm.addEventListener('submit', function(e) {
@@ -136,6 +343,48 @@ document.addEventListener('DOMContentLoaded', function() {
             passwordInput.focus();
         }
     });
+
+    // Smooth scrolling for FAQ
+    document.querySelectorAll('.accordion-button').forEach(button => {
+        button.addEventListener('click', function() {
+            this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    });
 });
 </script>
+
+<style>
+.sticky-top {
+    position: sticky;
+    z-index: 1000;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    color: #0047AB;
+    font-weight: 600;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 71, 171, 0.25);
+    border-color: #0047AB;
+}
+
+.bg-primary, .bg-success, .bg-warning {
+    transition: transform 0.3s ease;
+}
+
+.bg-primary:hover, .bg-success:hover, .bg-warning:hover {
+    transform: scale(1.1);
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+</style>
 {% endblock %}

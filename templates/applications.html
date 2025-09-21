@@ -4,12 +4,23 @@
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h4 class="card-title mb-0">New Credit Application</h4>
                 <small class="fst-italic">Complete all sections for accurate TideScore calculation</small>
             </div>
             <div class="card-body">
                 <form id="tidescoreForm" enctype="multipart/form-data">
+                    <!-- Progress Indicator -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <small>Progress</small>
+                            <small><span id="progress-percent">0</span>% Complete</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" id="form-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+
                     <!-- Personal Information -->
                     <div class="mb-4">
                         <h5 class="border-bottom pb-2"><i class="fas fa-user"></i> Personal Information</h5>
@@ -81,6 +92,7 @@
                             <div class="col-md-6">
                                 <label class="form-label">Employment Proof (Payslip/Letter) *</label>
                                 <input type="file" class="form-control" name="employment_proof" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <small class="form-text text-muted">Show stable income (+50 points)</small>
                             </div>
                         </div>
                     </div>
@@ -108,6 +120,7 @@
                             <div class="col-md-12">
                                 <label class="form-label">Airtime Statement Proof (Screenshots/PDF) *</label>
                                 <input type="file" class="form-control" name="airtime_proof" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <small class="form-text text-muted">Prove communication consistency (+100 points)</small>
                             </div>
                         </div>
                     </div>
@@ -131,6 +144,7 @@
                             <div class="col-md-6">
                                 <label class="form-label">Bank Statement (Last 3 months) *</label>
                                 <input type="file" class="form-control" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <small class="form-text text-muted">Show financial responsibility (+200 points)</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Average Monthly Balance (₦) *</label>
@@ -178,6 +192,7 @@
                                 </div>
                             </div>
                         </div>
+                        <small class="form-text text-muted">Regular bills show financial discipline (+100 points)</small>
                     </div>
 
                     <!-- Guarantors -->
@@ -229,6 +244,7 @@
                                 </select>
                             </div>
                         </div>
+                        <small class="form-text text-muted">Trusted references build credibility (+120 points)</small>
                     </div>
 
                     <!-- Consent -->
@@ -266,6 +282,33 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
+    // Progress tracking
+    function updateProgress() {
+        const totalFields = $('#tidescoreForm :input[required]').length;
+        const filledFields = $('#tidescoreForm :input[required]').filter(function() {
+            return $(this).val() !== '';
+        }).length;
+        
+        const progress = Math.round((filledFields / totalFields) * 100);
+        $('#progress-percent').text(progress);
+        $('#form-progress').css('width', progress + '%');
+        
+        // Update progress bar color
+        if (progress > 90) {
+            $('#form-progress').removeClass('bg-warning bg-danger').addClass('bg-success');
+        } else if (progress > 50) {
+            $('#form-progress').removeClass('bg-success bg-danger').addClass('bg-warning');
+        } else {
+            $('#form-progress').removeClass('bg-success bg-warning').addClass('bg-danger');
+        }
+    }
+    
+    // Update progress on any input change
+    $('#tidescoreForm :input').on('input change', updateProgress);
+    
+    // Initial progress update
+    updateProgress();
+
     $('#tidescoreForm').on('submit', function(e) {
         e.preventDefault();
         

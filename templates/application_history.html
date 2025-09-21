@@ -3,7 +3,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>My Application History</h1>
-    <a href="{{ url_for('new_application') }}" class="btn btn-success">+ New Application</a>
+    <a href="{{ url_for('new_application') }}" class="btn btn-success">
+        <i class="fas fa-plus me-2"></i>New Application
+    </a>
 </div>
 
 {% if applications %}
@@ -13,7 +15,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-0">Application #{{ app.id }}</h6>
+                        <h6 class="mb-0">Application #{{ app.id[:8] }}...</h6>
                         <small class="text-muted">{{ app.get_formatted_date() }}</small>
                     </div>
                     <span class="badge {{ app.get_verification_status_badge() }}">
@@ -51,18 +53,18 @@
                                 <div class="progress" style="height: 6px;">
                                     <div class="progress-bar bg-info airtime-progress" 
                                          data-score="{{ breakdown.get('Airtime & Data', 0) }}"
-                                         data-max="120"></div>
+                                         data-max="100"></div>
                                 </div>
-                                <small>{{ breakdown.get('Airtime & Data', 0) }}/120</small>
+                                <small>{{ breakdown.get('Airtime & Data', 0) }}/100</small>
                             </div>
                             <div class="col-6 mb-2">
                                 <small class="text-muted">Bill Payments</small>
                                 <div class="progress" style="height: 6px;">
                                     <div class="progress-bar bg-warning bill-progress" 
                                          data-score="{{ breakdown.get('Bill Payments', 0) }}"
-                                         data-max="170"></div>
+                                         data-max="100"></div>
                                 </div>
-                                <small>{{ breakdown.get('Bill Payments', 0) }}/170</small>
+                                <small>{{ breakdown.get('Bill Payments', 0) }}/100</small>
                             </div>
                             <div class="col-6 mb-2">
                                 <small class="text-muted">Bank Activity</small>
@@ -78,9 +80,9 @@
                                 <div class="progress" style="height: 6px;">
                                     <div class="progress-bar bg-secondary guarantor-progress" 
                                          data-score="{{ breakdown.get('Guarantors', 0) }}"
-                                         data-max="90"></div>
+                                         data-max="120"></div>
                                 </div>
-                                <small>{{ breakdown.get('Guarantors', 0) }}/90</small>
+                                <small>{{ breakdown.get('Guarantors', 0) }}/120</small>
                             </div>
                             <div class="col-6 mb-2">
                                 <small class="text-muted">Total Score</small>
@@ -145,9 +147,11 @@
     </div>
 {% else %}
     <div class="alert alert-info">
-        <h5>No applications yet!</h5>
+        <h5><i class="fas fa-info-circle me-2"></i>No applications yet!</h5>
         <p>Create your first credit application to see your TideScore.</p>
-        <a href="{{ url_for('new_application') }}" class="btn btn-primary">Create First Application</a>
+        <a href="{{ url_for('new_application') }}" class="btn btn-primary">
+            <i class="fas fa-rocket me-2"></i>Create First Application
+        </a>
     </div>
 {% endif %}
 
@@ -155,7 +159,7 @@
 <div class="mt-4">
     <div class="card">
         <div class="card-header">
-            <h6>Understanding Your TideScore</h6>
+            <h6><i class="fas fa-graduation-cap me-2"></i>Understanding Your TideScore</h6>
         </div>
         <div class="card-body">
             <div class="row">
@@ -181,24 +185,24 @@
             <div class="mt-3">
                 <h6>Score Categories:</h6>
                 <div class="row">
-                    <div class="col-md-4">
-                        <span class="badge bg-success">Personal & Employment</span>
+                    <div class="col-md-4 mb-3">
+                        <span class="badge bg-success mb-1">Personal & Employment</span>
                         <p class="small mb-1">Education, employment status, residency verification</p>
                     </div>
-                    <div class="col-md-4">
-                        <span class="badge bg-info">Airtime & Data</span>
+                    <div class="col-md-4 mb-3">
+                        <span class="badge bg-info mb-1">Airtime & Data</span>
                         <p class="small mb-1">Consistency and amount of airtime spending</p>
                     </div>
-                    <div class="col-md-4">
-                        <span class="badge bg-warning">Bill Payments</span>
+                    <div class="col-md-4 mb-3">
+                        <span class="badge bg-warning mb-1">Bill Payments</span>
                         <p class="small mb-1">Utility bills, subscriptions, regular payments</p>
                     </div>
-                    <div class="col-md-4">
-                        <span class="badge bg-primary">Bank Activity</span>
+                    <div class="col-md-4 mb-3">
+                        <span class="badge bg-primary mb-1">Bank Activity</span>
                         <p class="small mb-1">Account balance, transaction consistency</p>
                     </div>
-                    <div class="col-md-4">
-                        <span class="badge bg-secondary">Guarantors</span>
+                    <div class="col-md-4 mb-3">
+                        <span class="badge bg-secondary mb-1">Guarantors</span>
                         <p class="small mb-1">Quality and verification of guarantors</p>
                     </div>
                 </div>

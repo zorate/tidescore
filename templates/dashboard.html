@@ -2,79 +2,231 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Dashboard</h1>
-    <a href="{{ url_for('new_application') }}" class="btn btn-success">+ New Application</a>
+    <h1><i class="fas fa-home me-2"></i>Your Financial HQ</h1>
+    <a href="{{ url_for('new_application') }}" class="btn btn-success">
+        <i class="fas fa-plus me-2"></i>New Application
+    </a>
 </div>
 
+<!-- Welcome Message -->
 <div class="alert alert-info">
-    <h5>Welcome back, {{ user_email }}! 👋</h5>
-    <p class="mb-0">Ready to check your creditworthiness? Create a new application or view your history below.</p>
+    <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+            <h5 class="mb-1">Welcome back, {{ user_email }}! 👋</h5>
+            <p class="mb-0">Your financial consistency is building your future. Every payment counts.</p>
+        </div>
+        <div class="flex-shrink-0">
+            <i class="fas fa-rocket fa-2x text-info"></i>
+        </div>
+    </div>
 </div>
 
-<!-- Storage Usage Card - ADDED -->
-{% if storage_info %}
-<div class="row mb-4">
+<!-- HERO SCORE SECTION - The Centerpiece -->
+<div class="hero-score-container text-center mb-5">
+    <h1 class="hero-score">{{ user_score['scaled_score'] | default(0) }}</h1>
+    <p class="hero-score-label">Your TideScore</p>
+    <div class="hero-score-trend">
+        {% if user_score['scaled_score'] and user_score['scaled_score'] >= 650 %}
+        <i class="fas fa-arrow-up trend-up me-2"></i>
+        <span>Excellent! You're credit-ready</span>
+        {% elif user_score['scaled_score'] and user_score['scaled_score'] >= 450 %}
+        <i class="fas fa-arrow-up trend-up me-2"></i>
+        <span>Good progress! Keep building</span>
+        {% else %}
+        <i class="fas fa-seedling me-2"></i>
+        <span>Start your journey today</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- FINANCIAL PILLARS - The Core Vision -->
+<div class="row mb-5">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Storage Usage</h6>
-                <a href="{{ url_for('storage_info') }}" class="btn btn-sm btn-outline-primary">Details</a>
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-layer-group me-2"></i>Your Financial Pillars</h4>
+                <p class="mb-0 text-muted">These pillars represent your financial foundation</p>
             </div>
             <div class="card-body">
-                <div class="progress mb-2" style="height: 20px;">
-                    <div class="progress-bar storage-progress-dashboard" 
-                         data-percent="{{ (storage_info.used/storage_info.limit)*100 }}"
-                         data-used="{{ storage_info.used }}"
-                         data-limit="{{ storage_info.limit }}">
-                    </div>
+                    {% if user_score and user_score['breakdown'] %}
+            
+                <!-- Personal & Employment Pillar -->
+<div class="pillar mb-4">
+    <div class="pillar-icon">👤</div>
+    <div class="pillar-details">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="pillar-name">Personal & Employment Trust</span>
+            <span class="badge bg-success">{{ user_score['breakdown'].get('Personal & Employment', 0) }}/50</span>
+        </div>
+        <div class="pillar-progress">
+            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Personal & Employment', 0) / 50) * 100 }}%"></div>
+        </div>
+        <small class="text-muted">Your identity and employment stability build trust</small>
+    </div>
+</div>
+
+<!-- Airtime & Data Pillar -->
+<div class="pillar mb-4">
+    <div class="pillar-icon">📱</div>
+    <div class="pillar-details">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="pillar-name">Communication Consistency</span>
+            <span class="badge bg-info">{{ user_score['breakdown'].get('Airtime & Data', 0) }}/100</span>
+        </div>
+        <div class="pillar-progress">
+            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Airtime & Data', 0) / 100) * 100 }}%"></div>
+        </div>
+        <small class="text-muted">Regular airtime usage shows connectivity and reliability</small>
+    </div>
+</div>
+
+<!-- Bill Payments Pillar -->
+<div class="pillar mb-4">
+    <div class="pillar-icon">💡</div>
+    <div class="pillar-details">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="pillar-name">Bill Payment History</span>
+            <span class="badge bg-warning">{{ user_score['breakdown'].get('Bill Payments', 0) }}/100</span>
+        </div>
+        <div class="pillar-progress">
+            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Bill Payments', 0) / 100) * 100 }}%"></div>
+        </div>
+        <small class="text-muted">Consistent bill payments demonstrate financial responsibility</small>
+    </div>
+</div>
+
+<!-- Bank Activity Pillar -->
+<div class="pillar mb-4">
+    <div class="pillar-icon">🏦</div>
+    <div class="pillar-details">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="pillar-name">Banking Behavior</span>
+            <span class="badge bg-primary">{{ user_score['breakdown'].get('Bank Activity', 0) }}/200</span>
+        </div>
+        <div class="pillar-progress">
+            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Bank Activity', 0) / 200) * 100 }}%"></div>
+        </div>
+        <small class="text-muted">Regular transactions and balances show money management skills</small>
+    </div>
+</div>
+
+<!-- Guarantors Pillar -->
+<div class="pillar">
+    <div class="pillar-icon">🤝</div>
+    <div class="pillar-details">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="pillar-name">Social Trust Network</span>
+            <span class="badge bg-secondary">{{ user_score['breakdown'].get('Guarantors', 0) }}/120</span>
+        </div>
+        <div class="pillar-progress">
+            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Guarantors', 0) / 120) * 100 }}%"></div>
+        </div>
+        <small class="text-muted">Trusted relationships strengthen your financial profile</small>
+    </div>
+</div>
+                <!-- Empty State for New Users -->
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>Build Your First Pillar</h5>
+                    <p class="text-muted">Complete your first application to start building your financial foundation</p>
+                    <a href="{{ url_for('new_application') }}" class="btn btn-primary">
+                        <i class="fas fa-rocket me-2"></i>Start Building
+                    </a>
                 </div>
-                <small class="text-muted">
-                    {{ (storage_info.used/(1024*1024))|round(2) }} MB of 
-                    {{ (storage_info.limit/(1024*1024))|round(2) }} MB used
-                    {% if storage_info.available <= 0 %}
-                    <span class="text-danger"> - Storage full!</span>
-                    {% endif %}
-                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ACTION PLAN - Personalized Improvement -->
+{% if user_score and user_score['suggestions'] %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-target me-2"></i>Your Improvement Plan</h4>
+                <p class="mb-0">Pathway to increase your score</p>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for suggestion in user_score['suggestions'][:3] %}
+                    <div class="col-md-4 mb-3">
+                        <div class="border-start border-3 border-success ps-3">
+                            <h6 class="text-success">✓ {{ loop.index }}. Action Step</h6>
+                            <p class="small mb-0">{{ suggestion }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('new_application') }}" class="btn btn-outline-success">
+                        <i class="fas fa-tasks me-2"></i>View Full Action Plan
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 {% endif %}
 
+<!-- QUICK ACTIONS & STORAGE -->
 <div class="row">
-    <!-- Quick Actions Card -->
+    <!-- Quick Actions -->
     <div class="col-md-6 mb-4">
         <div class="card h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Quick Actions</h5>
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('new_application') }}" class="btn btn-outline-primary btn-lg">
-                        🚀 Create New Application
+                        <i class="fas fa-rocket me-2"></i>Build My Score
                     </a>
                     <a href="{{ url_for('my_applications') }}" class="btn btn-outline-secondary">
-                        📋 View Application History
+                        <i class="fas fa-history me-2"></i>View My Progress
                     </a>
                     <a href="{{ url_for('storage_info') }}" class="btn btn-outline-info">
-                        💾 Storage Information
+                        <i class="fas fa-hard-drive me-2"></i>Manage Storage
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Application History Card -->
+    <!-- Storage Usage -->
     <div class="col-md-6 mb-4">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0">Recent Activity</h5>
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Storage Status</h5>
             </div>
             <div class="card-body">
-                <p>Track your credit applications and monitor your financial health over time.</p>
+                {% if storage_info %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-medium">Document Storage</span>
+                        <span class="fw-medium">{{ storage_info['used_mb'] }}MB / {{ storage_info['limit_mb'] }}MB</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar 
+                            {% if storage_info['usage_percent'] > 90 %}bg-danger
+                            {% elif storage_info['usage_percent'] > 70 %}bg-warning
+                            {% else %}bg-success{% endif %}" 
+                            style="width: {{ storage_info['usage_percent'] }}%">
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ storage_info['usage_percent'] }}% used - {{ storage_info['available_mb'] }}MB available</small>
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-light border">
+                    <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Why Documents Matter</h6>
+                    <p class="small mb-0">Each document you upload helps us verify your financial consistency and build your score pillars stronger.</p>
+                </div>
+                
                 <div class="text-center">
-                    <a href="{{ url_for('my_applications') }}" class="btn btn-primary">
-                        View My Application History
+                    <a href="{{ url_for('storage_info') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-info-circle me-2"></i>Storage Details
                     </a>
                 </div>
             </div>
@@ -82,77 +234,59 @@
     </div>
 </div>
 
-<div class="row">
-    <!-- How It Works Card -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">How TideScore Works</h5>
-            </div>
-            <div class="card-body">
-                <ol class="ps-3">
-                    <li class="mb-2">Complete the application form with your financial information</li>
-                    <li class="mb-2">Upload supporting documents (max 5MB each)</li>
-                    <li class="mb-2">Our algorithm analyzes multiple data points</li>
-                    <li class="mb-2">Get instant credit score (0-850 scale)</li>
-                    <li class="mb-2">Receive your risk assessment</li>
-                    <li>Track your score history over time</li>
-                </ol>
-            </div>
-        </div>
+<!-- FINANCIAL EDUCATION -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Understanding Your Journey</h5>
     </div>
-
-    <!-- Score Meaning Card -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Understanding Your Score</h5>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <span class="badge bg-success fs-6 mb-2">650-850</span>
+                    <h6 class="text-success">Credit Ready</h6>
+                    <p class="small mb-0">Lenders see you as low risk. You qualify for the best rates.</p>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6 mb-2">
-                        <span class="badge bg-success">650-850</span>
-                        <p class="small mb-0 mt-1">Low Risk</p>
-                    </div>
-                    <div class="col-6 mb-2">
-                        <span class="badge bg-warning">450-649</span>
-                        <p class="small mb-0 mt-1">Medium Risk</p>
-                    </div>
-                    <div class="col-6 mb-2">
-                        <span class="badge bg-danger">250-449</span>
-                        <p class="small mb-0 mt-1">High Risk</p>
-                    </div>
-                    <div class="col-6 mb-2">
-                        <span class="badge bg-dark">0-249</span>
-                        <p class="small mb-0 mt-1">Very High Risk</p>
-                    </div>
+            <div class="col-md-3 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <span class="badge bg-warning fs-6 mb-2">450-649</span>
+                    <h6 class="text-warning">Building Strong</h6>
+                    <p class="small mb-0">You're on the right path. Keep building your pillars.</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <span class="badge bg-danger fs-6 mb-2">250-449</span>
+                    <h6 class="text-danger">Growth Phase</h6>
+                    <p class="small mb-0">Focus on consistent payments and building history.</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="border rounded p-3 h-100">
+                    <span class="badge bg-dark fs-6 mb-2">0-249</span>
+                    <h6 class="text-dark">Starting Out</h6>
+                    <p class="small mb-0">Every journey begins with a first step. Welcome!</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Storage Policy Card - ADDED -->
-<div class="card mb-4">
-    <div class="card-header bg-light">
-        <h6 class="mb-0">Storage Policy</h6>
-    </div>
-    <div class="card-body">
-        <ul class="mb-0 small">
-            <li>Maximum 5MB per file</li>
-            <li>Maximum 30MB total storage per user</li>
-            <li>Supported formats: PDF, PNG, JPG, JPEG, DOC, DOCX</li>
-            <li>Oldest files are automatically deleted when limit is exceeded</li>
-        </ul>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-header bg-light">
-        <h6 class="mb-0">Need Help?</h6>
-    </div>
-    <div class="card-body">
-        <p class="small mb-0">If you have questions about your score or need assistance with the application, our support team is here to help.</p>
+<!-- EMPOWERMENT MESSAGE -->
+<div class="card bg-light border-0">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+        <h3 class="text-dark">Your Consistency is Your Currency</h3>
+        <p class="lead text-muted">At TideScore, we believe every Nigerian deserves financial recognition. Your daily transactions, bill payments, and financial habits tell your story better than any traditional credit score.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('new_application') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-star me-2"></i>Build Your Legacy
+            </a>
+            <a href="{{ url_for('my_applications') }}" class="btn btn-outline-dark btn-lg">
+                <i class="fas fa-chart-line me-2"></i>Track Progress
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -160,35 +294,35 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
-    // Set progress bar width and color based on usage percentage for dashboard
-    $('.storage-progress-dashboard').each(function() {
-        const percent = parseFloat($(this).data('percent')) || 0;
-        const used = parseFloat($(this).data('used')) || 0;
-        const limit = parseFloat($(this).data('limit')) || 30 * 1024 * 1024;
-        
-        // Set width
-        $(this).css('width', percent + '%');
-        
-        // Set color based on usage
-        if (percent > 90) {
-            $(this).addClass('bg-danger');
-        } else if (percent > 70) {
-            $(this).addClass('bg-warning');
-        } else {
-            $(this).addClass('bg-success');
-        }
+    // Animate progress bars
+    $('.progress-bar, .pillar-progress-bar').each(function() {
+        const width = $(this).css('width');
+        $(this).css('width', '0').animate({
+            width: width
+        }, 1500);
+    });
+    
+    // Smooth animations for cards
+    $('.card').hover(function() {
+        $(this).css('transform', 'translateY(-5px)');
+    }, function() {
+        $(this).css('transform', 'translateY(0)');
     });
 });
 </script>
 
 <style>
-.storage-progress-dashboard {
-    transition: width 0.6s ease;
+.pillar-progress-bar {
+    transition: width 1.5s ease-in-out;
 }
-.progress {
-    background-color: #e9ecef;
-    border-radius: 4px;
-    overflow: hidden;
+.card {
+    transition: all 0.3s ease;
+}
+.hero-score {
+    background: linear-gradient(135deg, #0047AB 0%, #002855 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 </style>
 {% endblock %}
