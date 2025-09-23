@@ -93,7 +93,7 @@ def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=7)  # Sessions last 7 days
 
-#UTILITY FUNCTION TO ENSURE UPLOAD DIRECTORY EXISTS
+# === UTILITY FUNCTION TO ENSURE UPLOAD DIRECTORY EXISTS ===
 def ensure_upload_directory():
     """Ensure the uploads directory exists"""
     upload_dir = 'uploads'
@@ -101,6 +101,9 @@ def ensure_upload_directory():
         os.makedirs(upload_dir)
         print(f"Created upload directory: {upload_dir}")
     return upload_dir
+
+# CALL THE FUNCTION WHEN APP STARTS
+ensure_upload_directory()
 
 # === ROUTES ===
 @app.route('/manifest.json')
@@ -116,7 +119,7 @@ def home():
             return redirect(url_for('dashboard'))
     # Render the enhanced login page directly instead of redirecting to auth.login
     return render_template('index.html')
-    
+
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
@@ -230,9 +233,7 @@ def submit_application():
         upload_errors = []
 
         # Ensure upload directory exists
-        upload_dir = 'uploads'
-        os.makedirs(upload_dir, exist_ok=True)
-
+        upload_dir = ensure_upload_directory()  # This ensures the directory exists
         for file_type in ['employment_proof', 'airtime_proof', 'bank_statement']:
             if file_type in request.files:
                 file = request.files[file_type]
@@ -548,32 +549,56 @@ def verify_application(app_id):
 @admin_required
 def admin_view_document(app_id, document_type):
     try:
+        print(f"Attempting to serve {document_type} for application {app_id}")
+        
         application = db.get_application_by_id(app_id)
         if not application:
-            abort(404)
+            print("Application not found")
+            flash('Application not found', 'error')
+            return redirect(url_for('admin_applications'))
         
         if not application.files_path:
-            abort(404)
-            
-        files_data = application.files_path
+            print("No files found for this application")
+            flash('No files found for this application', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
         
-        if document_type not in files_data or not files_data[document_type]:
-            abort(404)
+        # Check if the document type exists
+        if document_type not in application.files_path:
+            print(f"Document type {document_type} not found")
+            flash(f'Document type {document_type} not found', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
         
-        if isinstance(files_data[document_type], dict) and 'filename' in files_data[document_type]:
-            file_path = files_data[document_type]['filename']
-            absolute_path = os.path.join('uploads', file_path)
-            
-            if not os.path.exists(absolute_path):
-                abort(404)
-                
-            return send_file(absolute_path, as_attachment=False)
+        file_info = application.files_path[document_type]
+        
+        # Handle both string and dictionary formats
+        if isinstance(file_info, dict):
+            filename = file_info.get('filename')
         else:
-            abort(404)
+            filename = file_info  # Old format
+        
+        if not filename:
+            print("Filename missing from file info")
+            flash('File information is incomplete', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
+        
+        file_path = os.path.join('uploads', filename)
+        print(f"Looking for file at: {file_path}")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            flash(f'File not found: {filename}', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
+        
+        print(f"File found, serving: {filename}")
+        return send_file(file_path, as_attachment=False)
         
     except Exception as e:
         print(f"Error serving document: {e}")
-        abort(500)
+        import traceback
+        traceback.print_exc()
+        flash(f'Error accessing file: {str(e)}', 'error')
+        return redirect(url_for('admin_application_detail', app_id=app_id))
 
 @app.route('/admin/verification-history/<app_id>')
 @admin_required
