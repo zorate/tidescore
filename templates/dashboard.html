@@ -48,82 +48,83 @@
                 <p class="mb-0 text-muted">These pillars represent your financial foundation</p>
             </div>
             <div class="card-body">
-                    {% if user_score and user_score['breakdown'] %}
+                {% if user_score and user_score['breakdown'] %}
             
                 <!-- Personal & Employment Pillar -->
-<div class="pillar mb-4">
-    <div class="pillar-icon">👤</div>
-    <div class="pillar-details">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="pillar-name">Personal & Employment Trust</span>
-            <span class="badge bg-success">{{ user_score['breakdown'].get('Personal & Employment', 0) }}/50</span>
-        </div>
-        <div class="pillar-progress">
-            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Personal & Employment', 0) / 50) * 100 }}%"></div>
-        </div>
-        <small class="text-muted">Your identity and employment stability build trust</small>
-    </div>
-</div>
+                <div class="pillar mb-4">
+                    <div class="pillar-icon">👤</div>
+                    <div class="pillar-details">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pillar-name">Personal & Employment Trust</span>
+                            <span class="badge bg-success">{{ user_score['breakdown'].get('Personal & Employment', 0) }}/50</span>
+                        </div>
+                        <div class="pillar-progress">
+                            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Personal & Employment', 0) / 50) * 100 }}%"></div>
+                        </div>
+                        <small class="text-muted">Your identity and employment stability build trust</small>
+                    </div>
+                </div>
 
-<!-- Airtime & Data Pillar -->
-<div class="pillar mb-4">
-    <div class="pillar-icon">📱</div>
-    <div class="pillar-details">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="pillar-name">Communication Consistency</span>
-            <span class="badge bg-info">{{ user_score['breakdown'].get('Airtime & Data', 0) }}/100</span>
-        </div>
-        <div class="pillar-progress">
-            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Airtime & Data', 0) / 100) * 100 }}%"></div>
-        </div>
-        <small class="text-muted">Regular airtime usage shows connectivity and reliability</small>
-    </div>
-</div>
+                <!-- Airtime & Data Pillar -->
+                <div class="pillar mb-4">
+                    <div class="pillar-icon">📱</div>
+                    <div class="pillar-details">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pillar-name">Communication Consistency</span>
+                            <span class="badge bg-info">{{ user_score['breakdown'].get('Airtime & Data', 0) }}/100</span>
+                        </div>
+                        <div class="pillar-progress">
+                            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Airtime & Data', 0) / 100) * 100 }}%"></div>
+                        </div>
+                        <small class="text-muted">Regular airtime usage shows connectivity and reliability</small>
+                    </div>
+                </div>
 
-<!-- Bill Payments Pillar -->
-<div class="pillar mb-4">
-    <div class="pillar-icon">💡</div>
-    <div class="pillar-details">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="pillar-name">Bill Payment History</span>
-            <span class="badge bg-warning">{{ user_score['breakdown'].get('Bill Payments', 0) }}/100</span>
-        </div>
-        <div class="pillar-progress">
-            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Bill Payments', 0) / 100) * 100 }}%"></div>
-        </div>
-        <small class="text-muted">Consistent bill payments demonstrate financial responsibility</small>
-    </div>
-</div>
+                <!-- Bill Payments Pillar -->
+                <div class="pillar mb-4">
+                    <div class="pillar-icon">💡</div>
+                    <div class="pillar-details">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pillar-name">Bill Payment History</span>
+                            <span class="badge bg-warning">{{ user_score['breakdown'].get('Bill Payments', 0) }}/100</span>
+                        </div>
+                        <div class="pillar-progress">
+                            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Bill Payments', 0) / 100) * 100 }}%"></div>
+                        </div>
+                        <small class="text-muted">Consistent bill payments demonstrate financial responsibility</small>
+                    </div>
+                </div>
 
-<!-- Bank Activity Pillar -->
-<div class="pillar mb-4">
-    <div class="pillar-icon">🏦</div>
-    <div class="pillar-details">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="pillar-name">Banking Behavior</span>
-            <span class="badge bg-primary">{{ user_score['breakdown'].get('Bank Activity', 0) }}/200</span>
-        </div>
-        <div class="pillar-progress">
-            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Bank Activity', 0) / 200) * 100 }}%"></div>
-        </div>
-        <small class="text-muted">Regular transactions and balances show money management skills</small>
-    </div>
-</div>
+                <!-- Bank Activity Pillar -->
+                <div class="pillar mb-4">
+                    <div class="pillar-icon">🏦</div>
+                    <div class="pillar-details">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pillar-name">Banking Behavior</span>
+                            <span class="badge bg-primary">{{ user_score['breakdown'].get('Bank Activity', 0) }}/200</span>
+                        </div>
+                        <div class="pillar-progress">
+                            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Bank Activity', 0) / 200) * 100 }}%"></div>
+                        </div>
+                        <small class="text-muted">Regular transactions and balances show money management skills</small>
+                    </div>
+                </div>
 
-<!-- Guarantors Pillar -->
-<div class="pillar">
-    <div class="pillar-icon">🤝</div>
-    <div class="pillar-details">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="pillar-name">Social Trust Network</span>
-            <span class="badge bg-secondary">{{ user_score['breakdown'].get('Guarantors', 0) }}/120</span>
-        </div>
-        <div class="pillar-progress">
-            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Guarantors', 0) / 120) * 100 }}%"></div>
-        </div>
-        <small class="text-muted">Trusted relationships strengthen your financial profile</small>
-    </div>
-</div>
+                <!-- Guarantors Pillar -->
+                <div class="pillar">
+                    <div class="pillar-icon">🤝</div>
+                    <div class="pillar-details">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pillar-name">Social Trust Network</span>
+                            <span class="badge bg-secondary">{{ user_score['breakdown'].get('Guarantors', 0) }}/120</span>
+                        </div>
+                        <div class="pillar-progress">
+                            <div class="pillar-progress-bar" style="width: {{ (user_score['breakdown'].get('Guarantors', 0) / 120) * 100 }}%"></div>
+                        </div>
+                        <small class="text-muted">Trusted relationships strengthen your financial profile</small>
+                    </div>
+                </div>
+                {% else %}
                 <!-- Empty State for New Users -->
                 <div class="text-center py-4">
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>

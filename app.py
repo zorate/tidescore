@@ -117,9 +117,9 @@ def home():
             return redirect(url_for('admin_dashboard'))
         else:
             return redirect(url_for('dashboard'))
-    # Render the enhanced login page directly instead of redirecting to auth.login
+    # Render the enhanced login page directly
     return render_template('index.html')
-
+    
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:

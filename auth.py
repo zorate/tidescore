@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from pymongo.errors import DuplicateKeyError  # ADD THIS IMPORT
+from pymongo.errors import DuplicateKeyError
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -43,6 +43,13 @@ def send_password_reset_email(email, reset_token):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, redirect to appropriate dashboard
+    if 'user' in session:
+        if session['user'].get('is_admin', False):
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
@@ -50,11 +57,11 @@ def login():
         
         if not email or '@' not in email:
             flash('Please enter a valid email address', 'error')
-            return render_template('login.html', email=email)
+            return redirect(url_for('home'))  # Redirect to home page which has the beautiful design
         
         if not password or len(password) < 8:
             flash('Password must be at least 8 characters', 'error')
-            return render_template('login.html', email=email)
+            return redirect(url_for('home'))  # Redirect to home page
         
         if action == 'signup':
             try:
@@ -62,7 +69,7 @@ def login():
                 existing_user = db.get_user_by_email(email)
                 if existing_user:
                     flash('Email already registered. Please login instead.', 'error')
-                    return render_template('login.html', email=email)
+                    return redirect(url_for('home'))
                 
                 # Hash password with bcrypt (NDPR compliant)
                 password_hash = hash_password(password)
@@ -74,24 +81,24 @@ def login():
                 
                 if not success:
                     flash('Registration failed. Please try again.', 'error')
-                    return render_template('login.html', email=email)
+                    return redirect(url_for('home'))
                 
                 # DOUBLE CHECK: Verify user was actually stored
                 verify_user = db.get_user_by_email(email)
                 if not verify_user:
                     flash('Registration completed but user not found. Please contact support.', 'error')
-                    return render_template('login.html', email=email)
+                    return redirect(url_for('home'))
                 
                 flash('Registration successful! Please login.', 'success')
-                return render_template('login.html', email=email)
+                return redirect(url_for('home'))
                 
             except DuplicateKeyError:
                 flash('Email already registered. Please login instead.', 'error')
-                return render_template('login.html', email=email)
+                return redirect(url_for('home'))
             except Exception as e:
                 print(f"Registration error: {e}")
                 flash('Registration failed due to system error. Please try again.', 'error')
-                return render_template('login.html', email=email)
+                return redirect(url_for('home'))
         
         elif action == 'login':
             try:
@@ -99,12 +106,12 @@ def login():
                 user = db.get_user_by_email(email)
                 if not user:
                     flash('No account found with this email. Please sign up first.', 'error')
-                    return render_template('login.html', email=email)
+                    return redirect(url_for('home'))
                 
                 # VERIFY with bcrypt (NDPR compliant)
                 if not verify_password(password, user['password_hash']):
                     flash('Invalid password', 'error')
-                    return render_template('login.html', email=email)
+                    return redirect(url_for('home'))
                 
                 # Login successful - update last login
                 db.update_last_login(user['_id'])
@@ -127,9 +134,10 @@ def login():
             except Exception as e:
                 print(f"Login error: {e}")
                 flash('Login failed. Please try again.', 'error')
-                return render_template('login.html', email=email)
+                return redirect(url_for('home'))
     
-    return render_template('login.html')
+    # For GET requests, redirect to home page which shows the beautiful index.html
+    return redirect(url_for('home'))
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -199,4 +207,4 @@ def reset_password(token):
 def logout():
     session.clear()
     flash('You have been logged out.', 'info')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('home'))  # Redirect to home page instead of login page

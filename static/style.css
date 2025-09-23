@@ -342,6 +342,60 @@ h6 { font-size: 1rem !important; } /* 16px */
     color: #f1f5f9 !important;
 }
 
+/* --- Fixed Navbar Styling --- */
+.navbar-light {
+    background-color: white !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.navbar-light .navbar-brand {
+    color: var(--color-tide-primary) !important;
+    font-weight: 600;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: var(--color-tide-dark) !important;
+    font-weight: 500;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--color-tide-primary) !important;
+}
+
+.navbar-light .navbar-toggler {
+    border-color: rgba(0,0,0,0.1);
+}
+
+.navbar-light .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Dark theme navbar fixes */
+[data-theme="dark"] .navbar-light {
+    background-color: #1e293b !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .navbar-light .navbar-brand {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .navbar-light .navbar-nav .nav-link {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .navbar-light .navbar-nav .nav-link:hover {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .navbar-light .navbar-toggler {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .navbar-light .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
 /* --- Component: Navigation (Clean & Minimal) --- */
 .navbar {
     background-color: white;

@@ -59,7 +59,7 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('home') }}">
                 <i class="fas fa-wave"></i> TideScore
@@ -176,9 +176,7 @@
     });
     </script>
 
-    <!-- Any page-specific scripts will be inserted here -->
-    {% block scripts %}
-    <!-- Theme Switcher -->
+    <!-- Theme Switcher - MOVED HERE SO IT APPEARS ON ALL PAGES -->
     <div class="theme-switcher">
         <button class="theme-btn" id="themeToggle" title="Toggle dark/light mode">
             <i class="fas fa-moon" id="themeIcon"></i>
@@ -226,6 +224,8 @@
         });
     });
     </script>
-    {% endblock %}
+
+    <!-- Any page-specific scripts will be inserted here -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>
