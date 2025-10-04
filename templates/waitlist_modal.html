@@ -142,54 +142,69 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Waitlist form submission
-    document.getElementById('waitlistForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('waitlistSubmit');
-        const originalText = submitBtn.innerHTML;
-        
-        // Show loading state
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Joining...';
-        submitBtn.disabled = true;
+document.getElementById('waitlistForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('waitlistSubmit');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Joining...';
+    submitBtn.disabled = true;
 
-        const formData = {
-            email: document.getElementById('waitlistEmail').value,
-            name: document.getElementById('waitlistName').value,
-            phone: document.getElementById('waitlistPhone').value,
-            company: currentUserType === 'business' ? document.getElementById('waitlistCompany').value : null,
-            user_type: currentUserType
-        };
+    // Get form values safely
+    const email = document.getElementById('waitlistEmail').value || '';
+    const name = document.getElementById('waitlistName').value || '';
+    const phone = document.getElementById('waitlistPhone').value || '';
+    const company = currentUserType === 'business' ? (document.getElementById('waitlistCompany').value || '') : '';
 
-        fetch('/join-waitlist', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                waitlistModal.hide();
-                setTimeout(() => {
-                    successModal.show();
-                    document.getElementById('waitlistForm').reset();
-                    document.querySelector('.user-type-btn').click(); // Reset to individual
-                }, 300);
-            } else {
-                alert(data.message || 'Error joining waitlist. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error. Please try again.');
-        })
-        .finally(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
+    const formData = {
+        email: email.trim(),
+        name: name.trim(),
+        phone: phone.trim(),
+        company: company.trim(),
+        user_type: currentUserType
+    };
+
+    console.log('Submitting waitlist form:', formData);
+
+    fetch('/join-waitlist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Waitlist response:', data);
+        if (data.success) {
+            waitlistModal.hide();
+            setTimeout(() => {
+                successModal.show();
+                document.getElementById('waitlistForm').reset();
+                // Reset to individual user type
+                document.querySelector('.user-type-btn[data-user-type="individual"]').click();
+            }, 300);
+        } else {
+            alert(data.message || 'Error joining waitlist. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error. Please check your connection and try again.');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     });
-
+});
+    
     // Make modal globally accessible
     window.showWaitlistModal = function() {
         waitlistModal.show();
