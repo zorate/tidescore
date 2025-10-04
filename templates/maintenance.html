@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <!-- Maintenance Header -->
+            <div class="mb-5">
+                <i class="fas fa-tools fa-4x text-warning mb-4"></i>
+                <h1 class="display-4 fw-bold">TideScore is Evolving</h1>
+                <p class="lead text-muted">We're building something amazing! Our platform is currently in development.</p>
+                
+                <div class="alert alert-info d-inline-block">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Under Construction:</strong> New features and improvements coming soon!
+                </div>
+            </div>
+
+            <!-- Countdown/Progress Section -->
+            <div class="row mb-5">
+                <div class="col-md-3 mb-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <i class="fas fa-rocket fa-2x text-primary mb-3"></i>
+                            <h3 class="text-primary">Launch</h3>
+                            <p class="text-muted mb-0">Coming Soon</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <i class="fas fa-cogs fa-2x text-success mb-3"></i>
+                            <h3 class="text-success">Features</h3>
+                            <p class="text-muted mb-0">Enhanced Scoring</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <i class="fas fa-shield-alt fa-2x text-warning mb-3"></i>
+                            <h3 class="text-warning">Security</h3>
+                            <p class="text-muted mb-0">Bank-Level</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <i class="fas fa-bolt fa-2x text-danger mb-3"></i>
+                            <h3 class="text-danger">Speed</h3>
+                            <p class="text-muted mb-0">Instant Results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What's Coming -->
+            <div class="row mb-5">
+                <div class="col-lg-10 mx-auto">
+                    <h3 class="mb-4">What to Expect</h3>
+                    <div class="row text-start">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-check text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6>Advanced AI Scoring</h6>
+                                    <p class="text-muted small">Machine learning-powered credit assessments</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-check text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6>Real-time Analytics</h6>
+                                    <p class="text-muted small">Live financial health monitoring</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-check text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6>Mobile Experience</h6>
+                                    <p class="text-muted small">Optimized for all devices</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-check text-success me-3 mt-1"></i>
+                                <div>
+                                    <h6>API Integration</h6>
+                                    <p class="text-muted small">Seamless business partnerships</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="bg-primary text-white rounded p-5 mb-5">
+                <h3 class="mb-3">Be the First to Know!</h3>
+                <p class="mb-4">Join our exclusive waitlist and get early access, special launch offers, and priority support.</p>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <button class="btn btn-warning btn-lg px-5 py-3 fw-bold" onclick="showWaitlistModal()">
+                            <i class="fas fa-rocket me-2"></i>Join Priority Waitlist
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="small mt-3 mb-0 opacity-75">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    No spam. Unsubscribe anytime.
+                </p>
+            </div>
+
+            <!-- Social Proof -->
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h5 class="mb-4">Already Joined by 500+ Early Adopters</h5>
+                    <div class="d-flex justify-content-center flex-wrap gap-4">
+                        <div class="text-center">
+                            <i class="fas fa-user-tie fa-2x text-info mb-2"></i>
+                            <h6>250+</h6>
+                            <small class="text-muted">Individuals</small>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-building fa-2x text-success mb-2"></i>
+                            <h6>50+</h6>
+                            <small class="text-muted">Businesses</small>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-handshake fa-2x text-warning mb-2"></i>
+                            <h6>200+</h6>
+                            <small class="text-muted">Partners</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
