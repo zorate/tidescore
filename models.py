@@ -194,7 +194,7 @@ class Database:
         """Initialize storage fields for existing users who don't have them"""
         if self.db is None:
             print("Database connection is None, cannot initialize storage fields")
-            =return False
+            return False
             
         try:
             # Update users who don't have total_storage_used field
