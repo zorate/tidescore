@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-list-alt"></i> Waitlist Subscribers</h1>
+    <span class="badge bg-primary fs-6">{{ subscribers|length }} subscribers</span>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h6 class="mb-0">Waitlist Management</h6>
+    </div>
+    <div class="card-body">
+        {% if subscribers %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Company</th>
+                        <th>Type</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subscriber in subscribers %}
+                    <tr>
+                        <td>{{ subscriber.email }}</td>
+                        <td>{{ subscriber.name or 'N/A' }}</td>
+                        <td>{{ subscriber.phone or 'N/A' }}</td>
+                        <td>{{ subscriber.company or 'N/A' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if subscriber.user_type == 'business' else 'info' }}">
+                                {{ subscriber.user_type|title }}
+                            </span>
+                        </td>
+                        <td>{{ subscriber.subscribed_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">No waitlist subscribers yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
