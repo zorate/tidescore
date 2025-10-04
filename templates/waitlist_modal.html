@@ -1,0 +1,198 @@
+<!-- Waitlist Modal -->
+<div class="modal fade" id="waitlistModal" tabindex="-1" aria-labelledby="waitlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="waitlistModalLabel">
+                    <i class="fas fa-rocket me-2"></i>Join the TideScore Waitlist
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Why Join?</h6>
+                            <ul class="small mb-0">
+                                <li>Early access to new features</li>
+                                <li>Exclusive beta testing opportunities</li>
+                                <li>Priority support</li>
+                                <li>Partnership opportunities</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6>For Individuals:</h6>
+                                <p class="small text-muted">Get early access to our alternative credit scoring platform and be among the first to experience modern financial assessment.</p>
+                                
+                                <h6>For Businesses:</h6>
+                                <p class="small text-muted">Explore partnership opportunities, API access, and enterprise solutions for your organization.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <form id="waitlistForm">
+                            <div class="mb-3">
+                                <label class="form-label">I am interested as:</label>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-outline-primary user-type-btn active" data-user-type="individual">
+                                        <i class="fas fa-user me-2"></i>Individual User
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success user-type-btn" data-user-type="business">
+                                        <i class="fas fa-building me-2"></i>Business Partner
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="waitlistEmail" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="waitlistEmail" name="email" required 
+                                       placeholder="your.email@example.com">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="waitlistName" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="waitlistName" name="name" required 
+                                       placeholder="Enter your full name">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="waitlistPhone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="waitlistPhone" name="phone" 
+                                       placeholder="+234 123 456 7890">
+                            </div>
+
+                            <div class="mb-3 business-field" style="display: none;">
+                                <label for="waitlistCompany" class="form-label">Company Name</label>
+                                <input type="text" class="form-control" id="waitlistCompany" name="company" 
+                                       placeholder="Your company name">
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="waitlistConsent" required>
+                                    <label class="form-check-label small" for="waitlistConsent">
+                                        I agree to receive updates about TideScore and understand I can unsubscribe at any time.
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100" id="waitlistSubmit">
+                                <i class="fas fa-paper-plane me-2"></i>Join Waitlist
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="waitlistSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Success!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5>Welcome to the Waitlist!</h5>
+                <p class="text-muted">You'll be among the first to know when we launch. Keep an eye on your inbox!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-type-btn.active {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.business-field {
+    transition: all 0.3s ease;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const waitlistModal = new bootstrap.Modal(document.getElementById('waitlistModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('waitlistSuccessModal'));
+    let currentUserType = 'individual';
+
+    // User type selection
+    document.querySelectorAll('.user-type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.user-type-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentUserType = this.dataset.userType;
+            
+            // Show/hide company field
+            const companyField = document.querySelector('.business-field');
+            if (currentUserType === 'business') {
+                companyField.style.display = 'block';
+            } else {
+                companyField.style.display = 'none';
+            }
+        });
+    });
+
+    // Waitlist form submission
+    document.getElementById('waitlistForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('waitlistSubmit');
+        const originalText = submitBtn.innerHTML;
+        
+        // Show loading state
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Joining...';
+        submitBtn.disabled = true;
+
+        const formData = {
+            email: document.getElementById('waitlistEmail').value,
+            name: document.getElementById('waitlistName').value,
+            phone: document.getElementById('waitlistPhone').value,
+            company: currentUserType === 'business' ? document.getElementById('waitlistCompany').value : null,
+            user_type: currentUserType
+        };
+
+        fetch('/join-waitlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                waitlistModal.hide();
+                setTimeout(() => {
+                    successModal.show();
+                    document.getElementById('waitlistForm').reset();
+                    document.querySelector('.user-type-btn').click(); // Reset to individual
+                }, 300);
+            } else {
+                alert(data.message || 'Error joining waitlist. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+
+    // Make modal globally accessible
+    window.showWaitlistModal = function() {
+        waitlistModal.show();
+    };
+});
+</script>
