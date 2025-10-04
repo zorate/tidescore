@@ -194,7 +194,7 @@ class Database:
         """Initialize storage fields for existing users who don't have them"""
         if self.db is None:
             print("Database connection is None, cannot initialize storage fields")
-            return False
+            =return False
             
         try:
             # Update users who don't have total_storage_used field
@@ -214,49 +214,49 @@ class Database:
         except Exception as e:
             print(f"Error initializing storage fields: {e}")
             return False
-
+            
     def add_waitlist_subscriber(self, email, name=None, phone=None, company=None, user_type='individual'):
-    """Add a new subscriber to the waitlist"""
-    if self.db is None:
-        print("Database connection is None, cannot add waitlist subscriber")
-        return False
+        """Add a new subscriber to the waitlist"""
+        if self.db is None:
+            print("Database connection is None, cannot add waitlist subscriber")
+            return False
         
-    try:
-        subscriber_data = {
-            "email": email,
-            "name": name,
-            "phone": phone,
-            "company": company,
-            "user_type": user_type,
-            "subscribed_at": datetime.utcnow(),
-            "status": "active"
-        }
+        try:
+            subscriber_data = {
+                "email": email,
+                "name": name,
+                "phone": phone,
+                "company": company,
+                "user_type": user_type,
+                "subscribed_at": datetime.utcnow(),
+                "status": "active"
+            }
         
-        # Check if email already exists
-        existing = self.db.waitlist.find_one({"email": email})
+            # Check if email already exists
+            existing = self.db.waitlist.find_one({"email": email})
         if existing:
             return False
             
         result = self.db.waitlist.insert_one(subscriber_data)
         return result.inserted_id is not None
         
-    except Exception as e:
-        print(f"Error adding waitlist subscriber: {e}")
+        except Exception as e:
+            print(f"Error adding waitlist subscriber: {e}")
         return False
 
-def get_waitlist_subscribers(self):
-    """Get all waitlist subscribers"""
-    if self.db is None:
-        print("Database connection is None, cannot get waitlist subscribers")
+    def get_waitlist_subscribers(self):
+        """Get all waitlist subscribers"""
+        if self.db is None:
+            print("Database connection is None, cannot get waitlist subscribers")
         return []
         
-    try:
-        subscribers = self.db.waitlist.find({"status": "active"}).sort("subscribed_at", DESCENDING)
+        try:
+            subscribers = self.db.waitlist.find({"status": "active"}).sort("subscribed_at", DESCENDING)
         return list(subscribers)
-    except Exception as e:
-        print(f"Error getting waitlist subscribers: {e}")
+        except Exception as e:
+            print(f"Error getting waitlist subscribers: {e}")
         return []
-
+        
     # ===== USER METHODS =====
     def add_user(self, user_id, email, password_hash, is_admin=False):
         """Add a new user to the database"""
