@@ -128,30 +128,48 @@ def waitlist_page():
 def join_waitlist():
     """Handle waitlist form submissions"""
     try:
+        # Get JSON data from request
         data = request.get_json()
         
-        email = data.get('email', '').strip().lower()
-        name = data.get('name', '').strip()
-        phone = data.get('phone', '').strip()
-        company = data.get('company', '').strip()
+        if not data:
+            return jsonify({
+                'success': False, 
+                'message': 'No data received. Please fill out the form.'
+            })
+        
+        # Safely get data with defaults
+        email = data.get('email', '').strip().lower() if data.get('email') else ''
+        name = data.get('name', '').strip() if data.get('name') else ''
+        phone = data.get('phone', '').strip() if data.get('phone') else ''
+        company = data.get('company', '').strip() if data.get('company') else ''
         user_type = data.get('user_type', 'individual')
+        
+        print(f"Waitlist submission received: {email}, {name}, {phone}, {company}, {user_type}")
         
         # Basic validation
         if not email or '@' not in email:
-            return jsonify({'success': False, 'message': 'Please enter a valid email address'})
+            return jsonify({
+                'success': False, 
+                'message': 'Please enter a valid email address'
+            })
         
         if not name:
-            return jsonify({'success': False, 'message': 'Please enter your name'})
+            return jsonify({
+                'success': False, 
+                'message': 'Please enter your name'
+            })
         
         # Add to waitlist
         success = db.add_waitlist_subscriber(email, name, phone, company, user_type)
         
         if success:
+            print(f"Successfully added to waitlist: {email}")
             return jsonify({
                 'success': True, 
                 'message': 'Successfully joined the waitlist! You\'ll be among the first to know when we launch.'
             })
         else:
+            print(f"Email already on waitlist: {email}")
             return jsonify({
                 'success': False, 
                 'message': 'This email is already on our waitlist. Thank you for your interest!'
@@ -159,6 +177,8 @@ def join_waitlist():
             
     except Exception as e:
         print(f"Error joining waitlist: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False, 
             'message': 'An error occurred. Please try again.'
