@@ -168,7 +168,7 @@ def join_waitlist():
 def dashboard():
     """Redirect to maintenance"""
     flash('Application is currently in development mode. Please join our waitlist for updates.', 'info')
-    return redirect(url_for('home'))
+    return redirect(url_for('waitlist.html'))
 
 @app.route('/storage-info')
 def storage_info():
