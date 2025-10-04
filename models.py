@@ -237,8 +237,8 @@ class Database:
         if existing:
             return False
             
-        result = self.db.waitlist.insert_one(subscriber_data)
-        return result.inserted_id is not None
+            result = self.db.waitlist.insert_one(subscriber_data)
+            return result.inserted_id is not None
         
         except Exception as e:
             print(f"Error adding waitlist subscriber: {e}")
