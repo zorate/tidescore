@@ -4,92 +4,208 @@ from models import db, Application
 import json
 import os
 import uuid
-from supabase import create_client
 from datetime import datetime
+from datetime import timedelta
 from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = Config.SECRET_KEY
 
-# Initialize Supabase client for storage
-supabase_storage = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+# === FILE STORAGE CONSTANTS ===
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB per file
+MAX_TOTAL_SIZE = 30 * 1024 * 1024  # 30MB total per user
 
-# === SECURITY IMPROVEMENT: Add security headers ===
+# === SECURITY HEADERS ===
 @app.after_request
 def add_security_headers(response):
-    """Add basic security headers to every response"""
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
 
-# Add custom template filter for JSON parsing
+# === TEMPLATE FILTER ===
 @app.template_filter('from_json')
 def from_json_filter(value):
-    """Convert JSON string to Python object"""
     try:
         return json.loads(value)
     except (TypeError, json.JSONDecodeError):
         return {}
 
-# Import and register auth blueprint
+# === AUTH BLUEPRINT ===
 from auth import auth_bp
 app.register_blueprint(auth_bp)
 
-# Admin required decorator
+# === ADMIN REQUIRED DECORATOR ===
 def admin_required(f):
-    """Decorator to ensure the user is an admin"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user' not in session:
             return redirect(url_for('auth.login'))
-        if not is_admin_user():
+        if not session['user'].get('is_admin', False):
             flash('Access denied. Admin privileges required.', 'error')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
-def is_admin_user():
-    """Check if current user is admin"""
-    if 'user' not in session:
+# === STORAGE MANAGEMENT FUNCTIONS ===
+def cleanup_user_files(user_id):
+    """Clean up old files when user exceeds storage limit"""
+    try:
+        user = db.get_user_by_id(user_id)
+        if not user or user.get('total_storage_used', 0) <= MAX_TOTAL_SIZE:
+            return True
+            
+        # Get user's files sorted by upload date (oldest first)
+        files = user.get('files', [])
+        files.sort(key=lambda x: x.get('uploaded_at', datetime.min))
+        
+        # Delete oldest files until under limit
+        total_used = user.get('total_storage_used', 0)
+        for file_info in files:
+            if total_used <= MAX_TOTAL_SIZE:
+                break
+                
+            # Delete physical file
+            file_path = os.path.join('uploads', file_info['filename'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Cleaned up file: {file_info['filename']}")
+                
+            # Update storage count
+            total_used -= file_info['size']
+            db.update_user_storage(user_id, file_info['size'], 'remove')
+            
+            # Remove from user's file list
+            db.db.users.update_one(
+                {"_id": user_id},
+                {"$pull": {"files": {"filename": file_info['filename']}}}
+            )
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error cleaning up user files: {e}")
         return False
-    # Change this to your actual admin email
-    return session['user']['email'] == 'admin@tidescore.com'
 
-# Homepage - Redirects to dashboard if logged in, else to login page
+# === SESSION PERSISTENCE ===
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=7)  # Sessions last 7 days
+
+# === UTILITY FUNCTION TO ENSURE UPLOAD DIRECTORY EXISTS ===
+def ensure_upload_directory():
+    """Ensure the uploads directory exists"""
+    upload_dir = 'uploads'
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+        print(f"Created upload directory: {upload_dir}")
+    return upload_dir
+
+# CALL THE FUNCTION WHEN APP STARTS
+ensure_upload_directory()
+
+# === ROUTES ===
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+
 @app.route('/')
 def home():
     if 'user' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('auth.login'))
-
-# User Dashboard - Main page after login
+        if session['user'].get('is_admin', False):
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('dashboard'))
+    # Render the enhanced login page directly
+    return render_template('index.html')
+    
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
-    return render_template('dashboard.html', user_email=session['user']['email'])
+    
+    # Get storage info for dashboard
+    storage_info = db.get_user_storage_info(session['user']['id'])
+    
+    # Convert bytes to MB for display and add calculated fields
+    if storage_info:
+        storage_info['used_mb'] = round(storage_info['used'] / (1024 * 1024), 2)
+        storage_info['limit_mb'] = round(storage_info['limit'] / (1024 * 1024), 2)
+        storage_info['available_mb'] = round(storage_info['available'] / (1024 * 1024), 2)
+        storage_info['usage_percent'] = round((storage_info['used'] / storage_info['limit']) * 100, 2) if storage_info['limit'] > 0 else 0
+    else:
+        # Create a default storage_info dict if none is returned
+        storage_info = {
+            'used': 0,
+            'limit': 30 * 1024 * 1024,  # 30MB in bytes
+            'available': 30 * 1024 * 1024,
+            'used_mb': 0,
+            'limit_mb': 30,
+            'available_mb': 30,
+            'usage_percent': 0,
+            'file_count': 0
+        }
+    
+    # Get the user's latest application and score
+    user_applications = db.get_user_applications(session['user']['id'])
+    user_score = {"scaled_score": 0}  # Default empty score
+    
+    if user_applications:
+        # Get the most recent application with a score
+        for app in user_applications:
+            if app.get_score_value() > 0:
+                user_score = app.get_score_dict()
+                break
+    
+    return render_template('dashboard.html', 
+                         user_email=session['user']['email'],
+                         storage_info=storage_info,  # This is now a dict with all needed fields
+                         user_score=user_score)
 
-# Page to submit a new credit application
+@app.route('/storage-info')
+def storage_info():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    storage_info = db.get_user_storage_info(session['user']['id'])
+    if not storage_info:
+        flash('Could not retrieve storage information', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Convert bytes to MB for display
+    storage_info['used_mb'] = round(storage_info['used'] / (1024 * 1024), 2)
+    storage_info['limit_mb'] = round(storage_info['limit'] / (1024 * 1024), 2)
+    storage_info['available_mb'] = round(storage_info['available'] / (1024 * 1024), 2)
+    storage_info['usage_percent'] = round((storage_info['used'] / storage_info['limit']) * 100, 2)
+    
+    return render_template('storage_info.html', storage_info=storage_info)
+
 @app.route('/new_application')
 def new_application():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
+    
+    # Check storage before allowing new application
+    storage_info = db.get_user_storage_info(session['user']['id'])
+    if storage_info and storage_info['available'] <= 0:
+        flash('You have reached your storage limit (30MB). Please delete some files before uploading new ones.', 'error')
+        return redirect(url_for('storage_info'))
+        
     return render_template('applications.html')
 
-# New route to handle application submissions with file uploads
 @app.route('/submit_application', methods=['POST'])
 def submit_application():
     if 'user' not in session:
         return jsonify({'error': 'Not authorized'}), 401
 
     try:
-        # Get form data
         applicant_data = {
             'full_name': request.form.get('full_name'),
             'email': request.form.get('email'),
             'phone': request.form.get('phone'),
             'dob': request.form.get('dob'),
+            'education_level': request.form.get('education_level'),
             'employment_status': request.form.get('employment_status'),
             'employer_name': request.form.get('employer_name'),
             'monthly_income': request.form.get('monthly_income'),
@@ -99,98 +215,208 @@ def submit_application():
             'bank_name': request.form.get('bank_name'),
             'account_number': request.form.get('account_number'),
             'avg_monthly_balance': request.form.get('avg_monthly_balance'),
+            'electricity_verified': 'Yes' if request.form.get('electricity_verified') else 'No',
+            'dstv_verified': 'Yes' if request.form.get('dstv_verified') else 'No',
+            'internet_verified': 'Yes' if request.form.get('internet_verified') else 'No',
+            'water_verified': 'Yes' if request.form.get('water_verified') else 'No',
+            'rent_verified': 'Yes' if request.form.get('rent_verified') else 'No',
             'g1_name': request.form.get('g1_name'),
             'g1_phone': request.form.get('g1_phone'),
+            'g1_relationship': request.form.get('g1_relationship'),
             'g2_name': request.form.get('g2_name'),
-            'g2_phone': request.form.get('g2_phone')
+            'g2_phone': request.form.get('g2_phone'),
+            'g2_relationship': request.form.get('g2_relationship')
         }
 
-        # === FIXED: Proper file upload to Supabase Storage ===
         files_uploaded = {}
+        total_size = 0
+        upload_errors = []
+
+        # Ensure upload directory exists
+        upload_dir = ensure_upload_directory()  # This ensures the directory exists
         for file_type in ['employment_proof', 'airtime_proof', 'bank_statement']:
             if file_type in request.files:
                 file = request.files[file_type]
                 if file and file.filename:
-                    # Security check - only allow certain file types
+                    # Check file size
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    file.seek(0)  # Reset file pointer
+                    
+                    if file_size > MAX_FILE_SIZE:
+                        error_msg = f'{file_type.replace("_", " ").title()} exceeds 5MB limit'
+                        upload_errors.append(error_msg)
+                        flash(error_msg, 'error')
+                        continue
+                    
+                    # Check user's available storage
+                    storage_info = db.get_user_storage_info(session['user']['id'])
+                    if storage_info and (storage_info['used'] + file_size) > MAX_TOTAL_SIZE:
+                        error_msg = 'Total file storage limit (30MB) exceeded'
+                        upload_errors.append(error_msg)
+                        flash(error_msg, 'error')
+                        continue
+                    
                     allowed_extensions = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx']
                     file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
                     
                     if file_extension in allowed_extensions:
                         try:
-                            # Generate unique filename
                             unique_filename = f"{session['user']['id']}_{file_type}_{uuid.uuid4().hex}.{file_extension}"
+                            file_path = os.path.join(upload_dir, unique_filename)
+                            file.save(file_path)
                             
-                            # Upload to Supabase Storage - FIXED SYNTAX
-                            file_content = file.read()
-                            result = supabase_storage.storage.from_("applications").upload(
-                                unique_filename,
-                                file_content,
-                                {"content-type": file.content_type}
-                            )
+                            # Verify file was actually saved
+                            if not os.path.exists(file_path):
+                                raise Exception("File failed to save to disk")
                             
-                            # Get public URL
-                            file_url = supabase_storage.storage.from_("applications").get_public_url(unique_filename)
+                            total_size += file_size
+                            
                             files_uploaded[file_type] = {
-                                'url': file_url,
+                                'filename': unique_filename,
+                                'original_name': file.filename,
+                                'size': file_size,
+                                'uploaded_at': datetime.utcnow().isoformat(),
                                 'verified': False,
                                 'verification_notes': '',
                                 'verified_by': '',
                                 'verified_at': ''
                             }
                             
-                            print(f"File uploaded successfully: {file_url}")
+                            print(f"Successfully saved file: {unique_filename} at {file_path}")
                             
                         except Exception as e:
-                            print(f"Error uploading file {file.filename}: {e}")
-                            flash(f'Error uploading {file_type}: {str(e)}', 'error')
+                            error_msg = f'Error uploading {file_type}: {str(e)}'
+                            print(f"Error saving file {file.filename}: {e}")
+                            upload_errors.append(error_msg)
+                            flash(error_msg, 'error')
                     else:
-                        print(f"Rejected invalid file type: {file.filename}")
-                        flash(f'Invalid file type for {file_type}. Allowed: PDF, PNG, JPG, JPEG, DOC, DOCX', 'error')
+                        error_msg = f'Invalid file type for {file_type}. Allowed: PDF, PNG, JPG, JPEG, DOC, DOCX'
+                        upload_errors.append(error_msg)
+                        flash(error_msg, 'error')
 
-        # Save application to database (without score yet - waiting for verification)
+        # If there were upload errors but we still want to proceed with the application
+        if upload_errors:
+            print(f"Upload errors occurred: {upload_errors}")
+            # We'll still proceed with the application but note there were file issues
+
+        # Update user storage if files were uploaded
+        if total_size > 0:
+            success = db.update_user_storage(session['user']['id'], total_size, 'add')
+            if not success:
+                print("Warning: Failed to update user storage in database")
+            
+            # Add files to user's file list
+            for file_type, file_info in files_uploaded.items():
+                try:
+                    result = db.db.users.update_one(
+                        {"_id": session['user']['id']},
+                        {"$push": {
+                            "files": {
+                                "filename": file_info['filename'],
+                                "type": file_type,
+                                "size": file_info['size'],
+                                "uploaded_at": datetime.utcnow(),
+                                "application_id": None  # Will be updated after app creation
+                            }
+                        }}
+                    )
+                    if result.modified_count == 0:
+                        print(f"Warning: Failed to add file {file_info['filename']} to user's file list")
+                except Exception as e:
+                    print(f"Error adding file to user list: {e}")
+
+        # Create the application even if some files failed to upload
         app_id = db.add_application(
             session['user']['id'],
             session['user']['email'],
             applicant_data,
-            json.dumps(files_uploaded) if files_uploaded else None  # Store as JSON string
+            files_uploaded if files_uploaded else None
         )
 
-        print(f"Application {app_id} submitted successfully! Waiting for verification.")
+        if not app_id:
+            return jsonify({'error': 'Failed to create application'}), 500
 
-        return jsonify({
+        # Update application ID in user's file records
+        if app_id and files_uploaded:
+            for file_type, file_info in files_uploaded.items():
+                try:
+                    result = db.db.users.update_one(
+                        {"_id": session['user']['id'], "files.filename": file_info['filename']},
+                        {"$set": {"files.$.application_id": app_id}}
+                    )
+                    if result.modified_count == 0:
+                        print(f"Warning: Failed to update application ID for file {file_info['filename']}")
+                except Exception as e:
+                    print(f"Error updating application ID for file: {e}")
+
+        session['last_application_id'] = app_id
+        
+        # Clean up if over limit
+        cleanup_user_files(session['user']['id'])
+        
+        response_data = {
             'success': True,
             'message': 'Application submitted successfully! It will be reviewed by our team.',
             'application_id': app_id
-        })
+        }
+        
+        # Include upload warnings if any
+        if upload_errors:
+            response_data['warnings'] = upload_errors
+            response_data['message'] = 'Application submitted with some file upload issues. Our team will review what was received.'
+        
+        return jsonify(response_data)
 
     except Exception as e:
         print("Error submitting application:", e)
-        return jsonify({'error': 'Failed to submit application'}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to submit application. Please try again.'}), 500
 
-# API Endpoint to calculate the score
+@app.route('/uploads/<filename>')
+def serve_uploaded_file(filename):
+    return send_from_directory('uploads', filename)
+
+@app.route('/debug-application/<app_id>')
+def debug_application(app_id):
+    """Debug route to check application data"""
+    application = db.get_application_by_id(app_id)
+    if not application:
+        return "Application not found"
+    
+    result = f"<h2>Application {application.id}</h2>"
+    result += f"<p>User: {application.user_email}</p>"
+    result += f"<p>Files: {application.files_path}</p>"
+    result += f"<p>Score Result: {application.score_result}</p>"
+    
+    if application.files_path:
+        result += "<h3>Uploaded Files:</h3>"
+        for file_type, file_info in application.files_path.items():
+            result += f"<p><strong>{file_type}:</strong> {file_info.get('filename', 'No filename')}</p>"
+    
+    return result
+
 @app.route('/calculate_score', methods=['POST'])
 def calculate_score():
     if 'user' not in session:
         return jsonify({'error': 'Not authorized'}), 401
 
     try:
-        # Get JSON data sent from the frontend
         applicant_data = request.get_json()
-        print("Received data:", applicant_data)
-
-        # Calculate the score using our algorithm
         from scoring_algorithm import calculate_tidescore
         score_result = calculate_tidescore(applicant_data)
-        print("Score calculated:", score_result)
 
-        # Save to database using our simple SQLite approach
-        app_id = db.add_application(
-            session['user']['id'],
-            session['user']['email'],
-            applicant_data,
-            score_result
-        )
-        print(f"Application {app_id} saved to database!")
+        app_id = session.get('last_application_id')
+        if not app_id:
+            return jsonify({'error': 'No application found to update with score'}), 400
+
+        application = db.get_application_by_id(app_id)
+        if not application:
+            return jsonify({'error': 'Application not found'}), 404
+
+        # Update application with score result
+        db.update_application_score(app_id, score_result)
 
         return jsonify(score_result)
 
@@ -198,87 +424,69 @@ def calculate_score():
         print("Error calculating score:", e)
         return jsonify({'error': 'Failed to calculate score'}), 500
 
-# Route to view application history
 @app.route('/my_applications')
 def my_applications():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
     
-    db_applications = db.get_user_applications(session['user']['id'])
-    applications = [Application.from_db_row(row) for row in db_applications]
-    
+    applications = db.get_user_applications(session['user']['id'])
     return render_template('application_history.html', applications=applications)
 
-# ADMIN ROUTES
+# === ADMIN ROUTES ===
 @app.route('/admin')
 @admin_required
 def admin_dashboard():
-    # Get admin statistics
     total_applications = db.get_application_count()
     average_score = db.get_average_score()
     risk_distribution = db.get_risk_distribution()
     recent_applications = db.get_all_applications(limit=10)
     verification_stats = db.get_verification_stats()
     
-    applications = [Application.from_db_row(row) for row in recent_applications]
-    
     return render_template('admin_dashboard.html',
                          total_applications=total_applications,
                          average_score=average_score,
                          risk_distribution=risk_distribution,
                          verification_stats=verification_stats,
-                         applications=applications)
+                         applications=recent_applications)
 
 @app.route('/admin/applications')
 @admin_required
 def admin_applications():
     all_applications = db.get_all_applications(limit=100)
-    applications = [Application.from_db_row(row) for row in all_applications]
-    
-    return render_template('admin_applications.html', applications=applications)
+    return render_template('admin_applications.html', applications=all_applications)
 
-@app.route('/admin/application/<int:app_id>')
+@app.route('/admin/application/<app_id>')
 @admin_required
 def admin_application_detail(app_id):
-    app_row = db.get_application_by_id(app_id)
-    if not app_row:
+    application = db.get_application_by_id(app_id)
+    if not application:
         flash('Application not found.', 'error')
         return redirect(url_for('admin_applications'))
     
-    application = Application.from_db_row(app_row)
-    
     return render_template('admin_application_detail.html', application=application)
 
-# NEW VERIFICATION ROUTES
 @app.route('/admin/pending')
 @admin_required
 def admin_pending_applications():
     pending_apps = db.get_pending_applications()
-    applications = [Application.from_db_row(row) for row in pending_apps]
-    
-    return render_template('admin_pending.html', applications=applications)
+    return render_template('admin_pending.html', applications=pending_apps)
 
-@app.route('/admin/verify/<int:app_id>', methods=['GET'])
+@app.route('/admin/verify/<app_id>', methods=['GET'])
 @admin_required
 def admin_verify_application(app_id):
-    app_row = db.get_application_for_verification(app_id)
-    if not app_row:
+    application = db.get_application_for_verification(app_id)
+    if not application:
         flash('Application not found.', 'error')
         return redirect(url_for('admin_pending_applications'))
     
-    application = Application.from_db_row(app_row)
-    
     return render_template('admin_verify.html', application=application)
 
-@app.route('/admin/verify_application/<int:app_id>', methods=['POST'])
+@app.route('/admin/verify_application/<app_id>', methods=['POST'])
 @admin_required
 def verify_application(app_id):
-    """Handle application verification with file checks"""
     try:
-        # Get form data
         overall_status = request.form.get('overall_status')
         
-        # Update individual file statuses
         employment_status = request.form.get('employment_proof_status')
         if employment_status:
             db.update_file_verification_status(
@@ -300,142 +508,149 @@ def verify_application(app_id):
                 request.form.get('bank_statement_notes')
             )
         
-        # Update overall application status
-        db.update_verification_status_only(
-            app_id, overall_status, session['user']['email'],
-            request.form.get('verification_notes')
-        )
-        
-        flash('Application verification updated successfully!', 'success')
+        verification_data = {
+            'employment_verified': 'Yes' if employment_status == 'Verified' else 'No',
+            'education_verified': 'Yes' if request.form.get('education_verified') == 'Verified' else 'No',
+            'residency_verified': 'Yes',
+            'airtime_status': 'Verified' if airtime_status == 'Verified' else 'Unverified',
+            'bill_status': 'Verified',
+            'bank_status': 'Verified' if bank_status == 'Verified' else 'Unverified',
+            'g1_verified': 'Yes' if request.form.get('g1_verified') else 'No',
+            'g2_verified': 'Yes' if request.form.get('g2_verified') else 'No',
+            'g1_relationship': request.form.get('g1_relationship_confirmed', 'No'),
+            'g2_relationship': request.form.get('g2_relationship_confirmed', 'No')
+        }
+
+        if overall_status == 'Verified':
+            from scoring_algorithm import calculate_tidescore
+            score_result = calculate_tidescore(verification_data)
+            
+            db.update_verification(
+                app_id, 
+                session['user']['email'], 
+                verification_data, 
+                score_result,
+                'Verified'
+            )
+            flash('Application verified and score calculated!', 'success')
+        else:
+            db.update_verification_status_only(
+                app_id, overall_status, session['user']['email'],
+                request.form.get('verification_notes')
+            )
+            flash('Application status updated!', 'success')
         
     except Exception as e:
         flash(f'Error updating verification: {str(e)}', 'error')
     
     return redirect(url_for('admin_verify_application', app_id=app_id))
 
-@app.route('/admin/view_document/<int:app_id>/<document_type>')
+@app.route('/admin/view_document/<app_id>/<document_type>')
 @admin_required
 def admin_view_document(app_id, document_type):
-    """Secure route for admins to view applicant documents"""
     try:
-        # Get the application
-        app_row = db.get_application_by_id(app_id)
-        if not app_row:
-            abort(404)
+        print(f"Attempting to serve {document_type} for application {app_id}")
         
-        application = Application.from_db_row(app_row)
+        application = db.get_application_by_id(app_id)
+        if not application:
+            print("Application not found")
+            flash('Application not found', 'error')
+            return redirect(url_for('admin_applications'))
         
-        # Parse the file paths
         if not application.files_path:
-            abort(404)
-            
-        files_data = json.loads(application.files_path)
+            print("No files found for this application")
+            flash('No files found for this application', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
         
-        # Check if the requested document type exists
-        if document_type not in files_data or not files_data[document_type]:
-            abort(404)
+        # Check if the document type exists
+        if document_type not in application.files_path:
+            print(f"Document type {document_type} not found")
+            flash(f'Document type {document_type} not found', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
         
-        # For Supabase storage, redirect to the URL
-        if isinstance(files_data[document_type], dict) and 'url' in files_data[document_type]:
-            return redirect(files_data[document_type]['url'])
+        file_info = application.files_path[document_type]
+        
+        # Handle both string and dictionary formats
+        if isinstance(file_info, dict):
+            filename = file_info.get('filename')
         else:
-            # For local file storage (if you switch later)
-            file_path = files_data[document_type]
-            absolute_path = os.path.join('uploads', file_path)
-            
-            if not os.path.exists(absolute_path):
-                abort(404)
-                
-            return send_file(absolute_path, as_attachment=False)
+            filename = file_info  # Old format
+        
+        if not filename:
+            print("Filename missing from file info")
+            flash('File information is incomplete', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
+        
+        file_path = os.path.join('uploads', filename)
+        print(f"Looking for file at: {file_path}")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            flash(f'File not found: {filename}', 'error')
+            return redirect(url_for('admin_application_detail', app_id=app_id))
+        
+        print(f"File found, serving: {filename}")
+        return send_file(file_path, as_attachment=False)
         
     except Exception as e:
         print(f"Error serving document: {e}")
-        abort(500)
+        import traceback
+        traceback.print_exc()
+        flash(f'Error accessing file: {str(e)}', 'error')
+        return redirect(url_for('admin_application_detail', app_id=app_id))
 
-@app.route('/admin/verification-history/<int:app_id>')
+@app.route('/admin/verification-history/<app_id>')
 @admin_required
 def admin_verification_history(app_id):
     history = db.get_verification_history(app_id)
     return render_template('admin_verification_history.html', history=history, app_id=app_id)
 
-# Development login route - REMOVE THIS IN PRODUCTION
 @app.route('/dev_login', methods=['GET', 'POST'])
 def dev_login():
-    # Disable in production
-    if os.environ.get('FLASK_ENV') == 'production':
+    if os.environ.get('FLASK_ENV') != 'development':
         flash('Development login is disabled in production', 'error')
         return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
-        email = request.form.get('email')
-        # Bypass actual email sending for development
+        email = request.form.get('email', '').strip().lower()
+        role = request.form.get('role', 'user')
+        
+        if not email or '@' not in email:
+            flash('Please enter a valid email address', 'error')
+            return render_template('dev_login.html', email=email)
+        
         session['user'] = {
-            'id': 'dev-user-id-12345',
-            'email': email
+            'id': f'dev-user-{uuid.uuid4().hex[:8]}',
+            'email': email,
+            'name': email.split('@')[0],
+            'is_admin': role == 'admin'
         }
-        flash(f'Development login successful as {email}', 'success')
-        return redirect(url_for('dashboard'))
+        
+        flash(f'Development login successful as {email} ({role})', 'success')
+        
+        if role == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('dashboard'))
     
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Development Login - TideScore</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body class="bg-light">
-        <div class="container mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header bg-warning">
-                            <h5 class="card-title mb-0">Development Login</h5>
-                        </div>
-                        <div class="card-body">
-                            <form method="POST">
-                                <div class="mb-3">
-                                    <label class="form-label">Enter any email:</label>
-                                    <input type="email" class="form-control" name="email" required 
-                                           placeholder="test@example.com">
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Login</button>
-                            </form>
-                            <div class="mt-3 text-center">
-                                <a href="/auth/login" class="btn btn-sm btn-outline-secondary">
-                                    Back to Main Login
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
+    return render_template('dev_login.html')
 
-# Quick logout route for development
-@app.route('/dev_logout')
-def dev_logout():
-    session.pop('user', None)
-    flash('Development logout successful.', 'info')
-    return redirect(url_for('dev_login'))
-
-# For Vercel deployment
 @app.route('/static/<path:path>')
 def serve_static(path):
     return send_from_directory('static', path)
 
-# Health check endpoint for deployment
 @app.route('/health')
 def health_check():
     return jsonify({'status': 'healthy', 'app': 'TideScore'})
 
-    # Add this at the very end of app.py
 if __name__ == '__main__':
-    print("starting Tidescore server...")
-    print("Database: tidescore.db (SQLite)")
-    print("Development longin available at: http://localhost:5000/dev_login")
-    print("Admin dashboard: http://localhost:5000/admin (use admin@tidescore.com)")
+    print("Starting Tidescore server...")
+    print("Database: MongoDB Atlas")
+    
+    if os.environ.get('FLASK_ENV') == 'development':
+        print("Development login available at: http://localhost:5000/dev_login")
+        print("Admin dashboard: http://localhost:5000/admin")
+    
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
