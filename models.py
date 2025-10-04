@@ -67,7 +67,7 @@ class Database:
             
         try:
             # Create collections by inserting empty documents if they don't exist
-            collections_to_create = ['users', 'applications', 'verification_history']
+            collections_to_create = ['users', 'applications', 'verification_history', 'waitlist'] #ADD 'WAITLIST' TO CREATE IT'S COLLECION
             
             for collection_name in collections_to_create:
                 if collection_name not in self.db.list_collection_names():
@@ -81,6 +81,7 @@ class Database:
             self.db.applications.create_index([("user_email", ASCENDING)])
             self.db.applications.create_index([("verification_status", ASCENDING)])
             self.db.verification_history.create_index([("application_id", ASCENDING)])
+            self.db.waitlist.create_index([("email", ASCENDING)], unique=True)  # ADD THIS LINE FOR WAITLIST
             
             # Ensure admin user exists (idempotent upsert to avoid duplicate-key logs)
             admin_email = "admin@tidescore.com"
@@ -213,6 +214,48 @@ class Database:
         except Exception as e:
             print(f"Error initializing storage fields: {e}")
             return False
+
+    def add_waitlist_subscriber(self, email, name=None, phone=None, company=None, user_type='individual'):
+    """Add a new subscriber to the waitlist"""
+    if self.db is None:
+        print("Database connection is None, cannot add waitlist subscriber")
+        return False
+        
+    try:
+        subscriber_data = {
+            "email": email,
+            "name": name,
+            "phone": phone,
+            "company": company,
+            "user_type": user_type,
+            "subscribed_at": datetime.utcnow(),
+            "status": "active"
+        }
+        
+        # Check if email already exists
+        existing = self.db.waitlist.find_one({"email": email})
+        if existing:
+            return False
+            
+        result = self.db.waitlist.insert_one(subscriber_data)
+        return result.inserted_id is not None
+        
+    except Exception as e:
+        print(f"Error adding waitlist subscriber: {e}")
+        return False
+
+def get_waitlist_subscribers(self):
+    """Get all waitlist subscribers"""
+    if self.db is None:
+        print("Database connection is None, cannot get waitlist subscribers")
+        return []
+        
+    try:
+        subscribers = self.db.waitlist.find({"status": "active"}).sort("subscribed_at", DESCENDING)
+        return list(subscribers)
+    except Exception as e:
+        print(f"Error getting waitlist subscribers: {e}")
+        return []
 
     # ===== USER METHODS =====
     def add_user(self, user_id, email, password_hash, is_admin=False):
