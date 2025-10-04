@@ -215,37 +215,34 @@ class Database:
             return False
 
     # ===== WAITLIST METHODS =====
-            def add_waitlist_subscriber(self, email, name=None, phone=None, company=None, user_type='individual'):
-    """Add a new subscriber to the waitlist"""
-    if self.db is None:
-        print("Database connection is None, cannot add waitlist subscriber")
-        return False
-        
-    try:
-        # Ensure all fields are properly handled
-        subscriber_data = {
-            "email": email.strip().lower() if email else '',
-            "name": name.strip() if name else '',
-            "phone": phone.strip() if phone else '',
-            "company": company.strip() if company else '',
-            "user_type": user_type if user_type else 'individual',
-            "subscribed_at": datetime.utcnow(),
-            "status": "active"
-        }
-        
-        # Check if email already exists
-        existing = self.db.waitlist.find_one({"email": subscriber_data["email"]})
-        if existing:
-            print(f"Email already exists in waitlist: {subscriber_data['email']}")
+    def add_waitlist_subscriber(self, email, name=None, phone=None, company=None, user_type='individual'):
+        """Add a new subscriber to the waitlist"""
+        if self.db is None:
+            print("Database connection is None, cannot add waitlist subscriber")
             return False
             
-        result = self.db.waitlist.insert_one(subscriber_data)
-        print(f"Successfully added waitlist subscriber: {subscriber_data['email']}")
-        return result.inserted_id is not None
-        
-    except Exception as e:
-        print(f"Error adding waitlist subscriber: {e}")
-        return False
+        try:
+            subscriber_data = {
+                "email": email.strip().lower() if email else '',
+                "name": name.strip() if name else '',
+                "phone": phone.strip() if phone else '',
+                "company": company.strip() if company else '',
+                "user_type": user_type if user_type else 'individual',
+                "subscribed_at": datetime.utcnow(),
+                "status": "active"
+            }
+            
+            # Check if email already exists
+            existing = self.db.waitlist.find_one({"email": email})
+            if existing:
+                return False
+                
+            result = self.db.waitlist.insert_one(subscriber_data)
+            return result.inserted_id is not None
+            
+        except Exception as e:
+            print(f"Error adding waitlist subscriber: {e}")
+            return False
 
     def get_waitlist_subscribers(self):
         """Get all waitlist subscribers"""
