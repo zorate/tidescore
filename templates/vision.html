@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Hero Section -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary">The Future of African Finance Starts Here</h1>
+                <p class="lead">Building a financial system that recognizes every African's true worth</p>
+            </div>
+
+            <!-- The Problem -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">🚫 The Problem: Africa's Credit Gap</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i><strong>24 Trillion Naira</strong> credit gap in Nigeria alone</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>65% of Africans are financially excluded</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>Traditional banks only serve the top 15%</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>Market traders, freelancers, students ignored</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>No credit history = no financial opportunities</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>Your consistency doesn't count in the current system</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Our Solution -->
+            <div class="card mb-4 bg-primary text-white">
+                <div class="card-body">
+                    <h2 class="card-title">💡 Our Solution: TideScore</h2>
+                    <p class="fs-5">We're building Africa's first <strong>behavior-based credit scoring system</strong> that recognizes your daily financial patterns as proof of reliability.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4 text-center mb-3">
+                            <i class="fas fa-mobile-alt fa-2x mb-2"></i>
+                            <h5>Airtime Usage</h5>
+                            <p>Regular top-ups show financial discipline</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <i class="fas fa-bolt fa-2x mb-2"></i>
+                            <h5>Utility Bills</h5>
+                            <p>Consistent payments build trust</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <i class="fas fa-wallet fa-2x mb-2"></i>
+                            <h5>Banking Patterns</h5>
+                            <p>Your transaction history tells your story</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Future We're Building -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">🌍 The African Financial Future</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>🎯 By 2027, We're Working Towards:</h5>
+                            <ul>
+                                <li>10 million Africans with formal credit scores</li>
+                                <li>$5B in unlocked credit opportunities</li>
+                                <li>Partnerships with 100+ African lenders</li>
+                                <li>Financial inclusion in 10 African countries</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>🚀 Our Technology Stack:</h5>
+                            <ul>
+                                <li>AI-powered behavioral analysis</li>
+                                <li>Blockchain-secured credit records</li>
+                                <li>Real-time bank data integration</li>
+                                <li>Mobile-first accessibility</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join the Movement -->
+            <div class="text-center">
+                <div class="card bg-light">
+                    <div class="card-body py-5">
+                        <h3 class="mb-3">Ready to Shape Africa's Financial Future?</h3>
+                        <p class="lead mb-4">Join thousands of Africans building the new financial system</p>
+                        <button class="btn btn-primary btn-lg" onclick="showWaitlistModal()">
+                            <i class="fas fa-rocket me-2"></i>Join the Movement
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
