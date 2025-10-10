@@ -116,7 +116,7 @@ def home():
     if 'user' in session and session['user'].get('is_admin', False):
         return redirect(url_for('admin_dashboard'))
     # Show maintenance page for everyone else
-    return render_template('maintenance.html')
+    return render_template('waitlist.html')
 
 @app.route('/waitlist')
 def waitlist_page():
